@@ -30,47 +30,74 @@ public class Member {
         return id;
     }
 
-    public void setId(int id) {
+    public Member setId(int id) {
         this.id = id;
+        return this;
     }
 
     public int getTelegramUserId() {
         return telegramUserId;
     }
 
-    public void setTelegramUserId(int telegramUserId) {
+    public Member setTelegramUserId(int telegramUserId) {
         this.telegramUserId = telegramUserId;
+        return this;
     }
 
     public long getTelegramChatId() {
         return telegramChatId;
     }
 
-    public void setTelegramChatId(long telegramChatId) {
+    public Member setTelegramChatId(long telegramChatId) {
         this.telegramChatId = telegramChatId;
+        return this;
     }
 
     public String getFirstName() {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
+    public Member setFirstName(String firstName) {
         this.firstName = firstName;
+        return this;
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
+    public Member setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
     }
 
     public String getAlias() {
         return alias;
     }
 
-    public void setAlias(String alias) {
+    public Member setAlias(String alias) {
         this.alias = alias;
+        return this;
+    }
+
+
+    public boolean equals(Object o){
+        if(o instanceof Member){
+            Member tc = (Member) o;
+            return this.telegramUserId == tc.getTelegramUserId() && this.telegramChatId == tc.getTelegramChatId();
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Member{" +
+                "id=" + id +
+                ", telegramUserId=" + telegramUserId +
+                ", telegramChatId=" + telegramChatId +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", alias='" + alias + '\'' +
+                '}';
     }
 }

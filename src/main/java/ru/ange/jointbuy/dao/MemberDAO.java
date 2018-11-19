@@ -1,12 +1,18 @@
 package ru.ange.jointbuy.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.ange.jointbuy.dao.mappers.MemberMapper;
 import ru.ange.jointbuy.pojo.Member;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 public class MemberDAO {
@@ -48,7 +54,7 @@ public class MemberDAO {
             ")";
 
 
-    public void addMembers(Member member) {
+    public Member addMembers(Member member) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("telegramUserId", member.getTelegramUserId());
         params.addValue("telegramChatId", member.getTelegramChatId());
@@ -56,6 +62,9 @@ public class MemberDAO {
         params.addValue("lastName", member.getLastName());
         params.addValue("alias", member.getAlias());
 
-        npjdbc.update( ADD_MEMBER,  params);
+        GeneratedKeyHolder holder = new GeneratedKeyHolder();
+        npjdbc.update( ADD_MEMBER, params, holder);
+
+        return member.setId( holder.getKey().intValue() );
     }
 }

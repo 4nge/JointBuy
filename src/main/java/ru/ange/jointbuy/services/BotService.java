@@ -21,8 +21,8 @@ public class BotService {
         return memberDAO.getMembers( chatId );
     }
 
-    public void addMembers(Member member) {
-        memberDAO.addMembers( member );
+    public Member addMembers(Member member) {
+        return memberDAO.addMembers( member );
     }
 
 }

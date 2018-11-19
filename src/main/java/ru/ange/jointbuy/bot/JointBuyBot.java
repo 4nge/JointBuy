@@ -4,6 +4,7 @@ package ru.ange.jointbuy.bot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -59,15 +60,14 @@ public class JointBuyBot extends AbilityBot {
             }
 
             else if (update.hasCallbackQuery()) {
-                String call_data = update.getCallbackQuery().getData();
-                long message_id = update.getCallbackQuery().getMessage().getMessageId();
-                long chat_id = update.getCallbackQuery().getMessage().getChatId();
-                this.handelCallBackQuery(call_data, message_id, chat_id);
-            }
+                String callData = update.getCallbackQuery().getData();
+                String callId = update.getCallbackQuery().getId();
 
-//            if (update.hasInlineQuery()) {
-//                handelInlineUpdate(update);
-//            }
+                long messageId = update.getCallbackQuery().getMessage().getMessageId();
+                long chatId = update.getCallbackQuery().getMessage().getChatId();
+                User sender = update.getCallbackQuery().getFrom();
+                this.handelCallBackQuery(callData, callId, messageId, chatId, sender);
+            }
         }
     }
 
@@ -76,15 +76,18 @@ public class JointBuyBot extends AbilityBot {
         for (int i = 0; i < users.size(); i++) {
             User user = users.get( i );
             if (user.getBot() && user.getUserName().equals( NAME )) {
-                // TODO check existing
-                Member member = new Member(
+
+                Member newMember = new Member(
                         sender.getId(),
                         chatId,
                         sender.getFirstName(),
                         sender.getLastName(),
-                        "");
-                botService.addMembers( member );
+                        new String());
+
                 List<Member> members = botService.getMembers( chatId );
+                if  (!members.contains( newMember )) {
+                    members.add( botService.addMembers( newMember ) );
+                }
 
                 SendMessage helloMsg = new SendMessage(chatId, HelloMsgHelper.getMsg(members))
                         .setReplyMarkup( HelloMsgHelper.getMarkup() );
@@ -99,17 +102,44 @@ public class JointBuyBot extends AbilityBot {
     }
 
 
-    private void handelCallBackQuery(String call_data, long message_id, long chat_id) {
-        if (call_data.equals( HelloMsgHelper.CALLBACK_DATA )) {
+    private void handelCallBackQuery(String callData, String callId , long messageId, long chatId, User sender) {
+        if (callData.equals( HelloMsgHelper.CALLBACK_DATA )) {
+            Member newMember = new Member(
+                    sender.getId(),
+                    chatId,
+                    sender.getFirstName(),
+                    sender.getLastName(),
+                    new String());
 
-            List<Member> members = botService.getMembers( chat_id );
-            EditMessageText edditedMsg = new EditMessageText()
-                    .setChatId(chat_id)
-                    .setMessageId(toIntExact(message_id))
-                    .setText(HelloMsgHelper.getMsg(members))
-                    .setReplyMarkup( HelloMsgHelper.getMarkup());
+            List<Member> members = botService.getMembers( chatId );
+
+            String msg = new String();
+            if (!members.contains( newMember )) {
+                members.add( botService.addMembers( newMember ) );
+                msg = "Вы присодинились к списку участников";
+
+                EditMessageText edditedMsg = new EditMessageText()
+                        .setChatId(chatId)
+                        .setMessageId(toIntExact(messageId))
+                        .setText(HelloMsgHelper.getMsg(members))
+                        .setReplyMarkup( HelloMsgHelper.getMarkup());
+
+                try {
+                    execute(edditedMsg);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                msg = "Вы уже есть в списке участников";
+            }
+
+            // Show insof msg
+            AnswerCallbackQuery acq = new AnswerCallbackQuery()
+                    .setCallbackQueryId( callId )
+                    .setText( msg );
+
             try {
-                execute(edditedMsg);
+                execute(acq);
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
