@@ -8,7 +8,6 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
-import ru.ange.jointbuy.bot.JointBuyBot;
 import ru.ange.jointbuy.services.BotService;
 
 
@@ -50,8 +49,12 @@ public class App {
             botOptions.setProxyHost(PROXY_HOST);
             botOptions.setProxyPort(PROXY_PORT);
 
-            // Register your newly created AbilityBot
-            botsApi.registerBot(new JointBuyBot(botOptions, botService));
+            //botsApi.registerBot(new JointBuyBot(botOptions, botService));
+            botsApi.registerBot(new JointBuyCommandBot(botOptions, botService));
+            //botsApi.registerBot(new TestBot3(botOptions, botService));
+
+
+
 
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();

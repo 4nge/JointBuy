@@ -9,10 +9,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.ange.jointbuy.dao.mappers.MemberMapper;
 import ru.ange.jointbuy.pojo.Member;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 
 public class MemberDAO {
@@ -52,7 +48,6 @@ public class MemberDAO {
             "    :lastName," +
             "    :alias" +
             ")";
-
 
     public Member addMembers(Member member) {
         MapSqlParameterSource params = new MapSqlParameterSource();

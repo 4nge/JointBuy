@@ -36,9 +36,18 @@
         <property name="npjdbc" ref="npjdbc" />
     </bean>
 
+    <bean id="systemMessageDAO" class="ru.ange.jointbuy.dao.SystemMessageDAO">
+        <property name="npjdbc" ref="npjdbc" />
+    </bean>
+
     <!-- Service -->
-    <bean id="botService" class="ru.ange.jointbuy.services.BotService">
+    <bean id="dbService" class="ru.ange.jointbuy.services.DbService">
         <property name="memberDAO" ref="memberDAO" />
+        <property name="systemMessageDAO" ref="systemMessageDAO" />
+    </bean>
+
+    <bean id="botService" class="ru.ange.jointbuy.services.BotService">
+        <property name="dbService" ref="dbService" />
     </bean>
 
 

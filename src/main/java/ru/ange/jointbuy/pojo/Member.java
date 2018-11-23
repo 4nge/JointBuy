@@ -80,6 +80,10 @@ public class Member {
         return this;
     }
 
+    public String getFullName() {
+        return this.firstName + " " + this.lastName;
+    }
+
 
     public boolean equals(Object o){
         if(o instanceof Member){

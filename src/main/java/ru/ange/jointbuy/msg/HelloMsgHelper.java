@@ -1,7 +1,7 @@
-package ru.ange.jointbuy.bot.msg;
+package ru.ange.jointbuy.msg;
 
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.User;
+
+import com.vdurmont.emoji.EmojiParser;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.ange.jointbuy.pojo.Member;
@@ -9,7 +9,7 @@ import ru.ange.jointbuy.pojo.Member;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HelloMsgHelper {//extends SendMessage {
+public class HelloMsgHelper {
 
     private static final String JOIN_BTT_TEXT = "Участвовать в закупках";
 
@@ -21,7 +21,7 @@ public class HelloMsgHelper {//extends SendMessage {
             "Для этого нужно всем участникам нажать на кнопку \""+JOIN_BTT_TEXT+"\", либо воспользоваться командой /addUser.\n\n" +
             "Текущий список пользователей:\n%s";
 
-    private static final String USER_PTT = " - %s %s\n";
+    private static final String USER_PTT = " :bust_in_silhouette: %s %s\n";
 
     public static final String CALLBACK_DATA = "join_new_user";
 
@@ -33,7 +33,7 @@ public class HelloMsgHelper {//extends SendMessage {
             String ln = user.getFirstName() != null ? user.getLastName() : "";
             usersText += String.format( USER_PTT, fn, ln );
         }
-        return String.format( MSG_TEXT, usersText );
+        return EmojiParser.parseToUnicode(String.format( MSG_TEXT, usersText ));
     }
 
     public static InlineKeyboardMarkup getMarkup() {
@@ -46,28 +46,10 @@ public class HelloMsgHelper {//extends SendMessage {
         markupInline.setKeyboard(rowsInline);
         return markupInline;
     }
-//
-//    public HelloMsgHelper(long chatId, List<User> users) {
-//        super(chatId, "");
-//
-//        String usersText = new String();
-//        for (int i = 0; i < users.size(); i++) {
-//            User user = users.get( i );
-//            String fn = user.getFirstName() != null ? user.getFirstName() : "";
-//            String ln = user.getFirstName() != null ? user.getLastName() : "";
-//            usersText += String.format( USER_PTT, fn, ln );
-//        }
-//        this.setText( String.format( MSG_TEXT, usersText ));
-//
-//        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-//        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-//        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-//        rowInline.add(new InlineKeyboardButton().setText(JOIN_BTT_TEXT).setCallbackData(CALLBACK_DATA));
-//        rowsInline.add(rowInline);
-//
-//        markupInline.setKeyboard(rowsInline);
-//        this.setReplyMarkup(markupInline);
-//    }
 
 
 }
+
+
+
+
