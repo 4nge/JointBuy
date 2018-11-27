@@ -1,13 +1,12 @@
-package ru.ange.jointbuy.commands;
+package ru.ange.jointbuy.extensions.bots.bot.commands;
 
-import org.telegram.telegrambots.extensions.bots.commandbot.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.ange.jointbuy.extensions.bot.commandbot.Callback;
-import ru.ange.jointbuy.extensions.bot.commandbot.impl.CallBackBotCommand;
+import ru.ange.jointbuy.extensions.bots.Callback;
+import ru.ange.jointbuy.extensions.bots.commandbot.callbackcommands.impl.CallBackBotCommand;
 
 public class AddUserCommand extends CallBackBotCommand {
 
@@ -18,8 +17,8 @@ public class AddUserCommand extends CallBackBotCommand {
             "Чтобы добавить участников закупки пришлите мне имена пользователей этого чата в формате:\n" +
             "@username1, @username2\n\n" +
             "Либо, если вы хотите добавить пользователей, которых (почему то все еще) нет в Telegram - пришлите их данные в формате:\n" +
-            "имя_1 - фамилия_1\n" +
-            "имя_2 - фамилия_2\n";
+            "Иван - Иванов\n" +
+            "Петр - Петров\n";
 
     public AddUserCommand(Callback callback) {
         super( COMMAND, DESCRIPTION, callback);

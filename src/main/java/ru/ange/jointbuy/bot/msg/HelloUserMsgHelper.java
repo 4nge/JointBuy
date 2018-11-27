@@ -1,4 +1,4 @@
-package ru.ange.jointbuy.msg;
+package ru.ange.jointbuy.bot.msg;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -20,15 +20,8 @@ public class HelloUserMsgHelper {
         return String.format( MSG_TEXT, userName );
     }
 
-    public static InlineKeyboardMarkup getMarkup() {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        rowInline.add(new InlineKeyboardButton().setText(BTT_TEXT).setCallbackData(CALLBACK_DATA));
-        rowsInline.add(rowInline);
-
-        markupInline.setKeyboard(rowsInline);
-        return markupInline;
-    }
+//    public static InlineKeyboardMarkup getMarkup() {
+//        return getReplyKeyboard( BTT_TEXT, CALLBACK_DATA );
+//    }
 
 }

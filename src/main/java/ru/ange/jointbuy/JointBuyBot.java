@@ -3,7 +3,7 @@
 //
 //import org.telegram.abilitybots.api.bots.AbilityBot;
 //import org.telegram.telegrambots.bots.DefaultBotOptions;
-//import org.telegram.telegrambots.extensions.bots.commandbot.TelegramLongPollingCommandBot;
+//import org.telegram.telegrambots.extensions.bots.callbackcommands.TelegramLongPollingCommandBot;
 //import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 //import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 //import org.telegram.telegrambots.meta.api.objects.Update;
@@ -160,8 +160,8 @@
 ////                            EditMessageText editedMsg = new EditMessageText()
 ////                                    .setChatId(hmsg.getTelegramChatId())
 ////                                    .setMessageId(toIntExact(hmsg.getTelegramMsgId()))
-////                                    .setText( HelloMsgHelper.getMsg(members))
-////                                    .setReplyMarkup( HelloMsgHelper.getMarkup());
+////                                    .setText( HelloMsg.getMsg(members))
+////                                    .setReplyMarkup( HelloMsg.getMarkup());
 ////                            execute(editedMsg);
 ////                        }
 ////                        SendMessage msg = new SendMessage( chatId, HelloUserMsgHelper.getMsg( newMember.getFullName() ))
@@ -188,7 +188,7 @@
 ////
 ////
 //////            String callData, String callId , long messageId, long chatId, User sender) {
-//////        if (callData.equals( HelloMsgHelper.CALLBACK_DATA )) {
+//////        if (callData.equals( HelloMsg.CALLBACK_DATA )) {
 //////            Member newMember = new Member(
 //////                    sender.getId(),
 //////                    chatId,
@@ -209,8 +209,8 @@
 //////                EditMessageText editedMsg = new EditMessageText()
 //////                        .setChatId(chatId)
 //////                        .setMessageId(toIntExact(messageId))
-//////                        .setText( HelloMsgHelper.getMsg(members))
-//////                        .setReplyMarkup( HelloMsgHelper.getMarkup());
+//////                        .setText( HelloMsg.getMsg(members))
+//////                        .setReplyMarkup( HelloMsg.getMarkup());
 //////
 //////                try {
 //////                    execute(editedMsg);

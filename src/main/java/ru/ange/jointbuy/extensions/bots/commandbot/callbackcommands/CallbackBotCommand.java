@@ -1,4 +1,4 @@
-package ru.ange.jointbuy.extensions.bot.commandbot;
+package ru.ange.jointbuy.extensions.bots.commandbot.callbackcommands;
 
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;

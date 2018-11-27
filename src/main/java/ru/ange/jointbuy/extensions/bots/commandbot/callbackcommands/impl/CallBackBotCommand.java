@@ -1,12 +1,12 @@
-package ru.ange.jointbuy.extensions.bot.commandbot.impl;
+package ru.ange.jointbuy.extensions.bots.commandbot.callbackcommands.impl;
 
 import org.telegram.telegrambots.extensions.bots.commandbot.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.bots.AbsSender;
-import ru.ange.jointbuy.extensions.bot.commandbot.Callback;
+import ru.ange.jointbuy.extensions.bots.Callback;
 
-public abstract class CallBackBotCommand extends BotCommand { //implements Callback {
+public abstract class CallBackBotCommand extends BotCommand {
 
     private Callback callback;
 

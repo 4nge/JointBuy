@@ -1,15 +1,18 @@
-package ru.ange.jointbuy.msg;
+package ru.ange.jointbuy.bot.msg;
 
 
 import com.vdurmont.emoji.EmojiParser;
+import org.jetbrains.annotations.NotNull;
+import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.ange.jointbuy.pojo.Member;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HelloMsgHelper {
+public class HelloMsg {
 
     private static final String JOIN_BTT_TEXT = "Участвовать в закупках";
 
@@ -22,10 +25,19 @@ public class HelloMsgHelper {
             "Текущий список пользователей:\n%s";
 
     private static final String USER_PTT = " :bust_in_silhouette: %s %s\n";
-
     public static final String CALLBACK_DATA = "join_new_user";
 
-    public static String getMsg(List<Member> members) {
+    public static final String ADD_USER = "Вы присодинились к списку участников";
+    public static final String USER_ALREADY_EXISTS = "Вы уже есть в списке участников";
+
+    private List<Member> members;
+
+
+    public HelloMsg(List<Member> members) {
+        this.members = members;
+    }
+
+    public String getText() {
         String usersText = new String();
         for (int i = 0; i < members.size(); i++) {
             Member user = members.get( i );
@@ -36,18 +48,20 @@ public class HelloMsgHelper {
         return EmojiParser.parseToUnicode(String.format( MSG_TEXT, usersText ));
     }
 
-    public static InlineKeyboardMarkup getMarkup() {
+    public ReplyKeyboard getMarkup() {
+        return getReplyKeyboard( JOIN_BTT_TEXT, CALLBACK_DATA );
+    }
+
+    @NotNull
+    static ReplyKeyboard getReplyKeyboard(String joinBttText, String callbackData) {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        rowInline.add(new InlineKeyboardButton().setText(JOIN_BTT_TEXT).setCallbackData(CALLBACK_DATA));
+        rowInline.add(new InlineKeyboardButton().setText( joinBttText ).setCallbackData( callbackData ));
         rowsInline.add(rowInline);
-
         markupInline.setKeyboard(rowsInline);
         return markupInline;
     }
-
-
 }
 
 
