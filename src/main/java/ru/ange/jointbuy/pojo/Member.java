@@ -26,6 +26,11 @@ public class Member {
         this.id = id;
     }
 
+    public Member(long telegramChatId, String firstName, String lastName) {
+        this( 0, telegramChatId, firstName, lastName, "" );
+    }
+
+
     public int getId() {
         return id;
     }

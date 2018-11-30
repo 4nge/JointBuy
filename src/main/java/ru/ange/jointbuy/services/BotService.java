@@ -5,6 +5,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 //import ru.ange.jointbuy.bot.msg.HelloMsgHelper;
@@ -64,19 +65,76 @@ public class BotService {
     }
 
 
-    public Member addMember(User newUser, long chatId) throws MemberAlreadyExistException {
+    public void handleAddUserCommand(Update upd, long chatId) {
+        User sender = upd.getMessage().getFrom();
+        this.addMember( sender, chatId );
+
+        for (MessageEntity me : upd.getMessage().getEntities()) {
+            if (me.getUser() != null) {
+                this.addMember( me.getUser(), chatId );
+            }
+        }
+
+        String query = upd.getMessage().getText();
+        String lines[] = query.split("[\r\n]+");
+        for (String line : lines) {
+            int sepIdx = line.indexOf(" ");
+            String firstName = line.substring( 0, sepIdx > 0 ? sepIdx : line.length() );
+            String lastName = sepIdx > 0 ? line.substring( sepIdx, line.length()) : null;
+            this.addMember( new Member( chatId, firstName, lastName ), chatId );
+        }
+    }
+
+
+    public boolean handleAddUserBtt(Update upd, long chatId) {
+        User sender = upd.getCallbackQuery().getFrom();
+        List<Member> members = this.getMembers( chatId );
+        if (!members.contains( sender )) {
+            this.addMember( sender, chatId );
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+
+    public Member addMember(Member newMember, long chatId) {
         List<Member> members = dbService.getMembers( chatId );
+        if  (!members.contains( newMember )) {
+            return dbService.addMembers( newMember );
+        } else {
+            return newMember;
+        }
+    }
+
+    public Member addMember(User newUser, long chatId) {
         Member newMember = new Member(
                 newUser.getId(),
                 chatId,
                 newUser.getFirstName(),
                 newUser.getLastName(),
                 new String());
+        return this.addMember(newMember, chatId);
+    }
 
-        if  (!members.contains( newMember ))
-            return dbService.addMembers( newMember );
-        else
-            throw new MemberAlreadyExistException();
+    public List<Member> addMember(List<User> newUsers, long chatId) {
+        List<Member> members = new ArrayList<Member>();
+        for (User newUser : newUsers) {
+            members.add( this.addMember( newUser, chatId ) );
+        }
+        return members;
+    }
+
+
+    public List<Member> addMemberFromEntities(List<MessageEntity> entities, long chatId) {
+        List<User> addingUsers = new ArrayList<User>();
+        for (MessageEntity me : entities) {
+            if (me.getUser() != null) {
+                addingUsers.add( me.getUser() );
+            }
+        }
+        return this.addMember( addingUsers, chatId );
     }
 
 

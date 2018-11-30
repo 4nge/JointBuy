@@ -1,9 +1,11 @@
 package ru.ange.jointbuy.bot;
 
+import com.vdurmont.emoji.EmojiParser;
 import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResult;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
@@ -15,8 +17,6 @@ import ru.ange.jointbuy.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.telegram.abilitybots.api.util.AbilityUtils.getChatId;
 
 public class ResponseHandler {
 
@@ -67,45 +67,49 @@ public class ResponseHandler {
         }
     }
 
-    private List<InlineQueryResult> getInlineResult(double sum, String name) {
-        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
-        InputTextMessageContent messageContent = new InputTextMessageContent();
-        messageContent.setMessageText("Text");
 
-        String msg = String.format( "Cумма: %s \u20BD\nНаименование: %s ", sum, name );
+
+    private List<InlineQueryResult> getInlineResult(double sum, String name, User user, int mc) {
+        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
+
+        String hashtag = name.replace( " ", "_" );
+        String userName = user.getFirstName() + " " + user.getLastName();
+        String msgText = String.format(Constants.INLINE_BUY_MSG_TEXT_PTT, hashtag, name, sum, userName, mc);
+
+        InputTextMessageContent msgCont = new InputTextMessageContent()
+                .setMessageText( EmojiParser.parseToUnicode(msgText) );
 
         InlineQueryResultArticle buy = new InlineQueryResultArticle()
-            .setInputMessageContent(messageContent)
-            .setId(Integer.toString(1))
-            .setTitle("Добавить покупку")
-            .setDescription(msg)
-            .setThumbUrl(Constants.BUY_IMG);
+                .setInputMessageContent(msgCont)
+                .setId(Integer.toString(1))
+                .setDescription(String.format( Constants.INLINE_TEXT_PTT, sum, name ))
+                .setTitle(Constants.BUY_IMG_BTT_TEXT)
+                .setThumbUrl(Constants.BUY_IMG_BTT_URL);
         results.add(buy);
 
-        InlineQueryResultArticle remittance = new InlineQueryResultArticle()
-            .setInputMessageContent(messageContent)
-            .setId(Integer.toString(2))
-            .setTitle("Добавить перевод")
-            .setDescription(msg)
-            .setThumbUrl(Constants.REMITTANCE_IMG);
-        results.add(remittance);
+//        InlineQueryResultArticle transfer = new InlineQueryResultArticle()
+//                .setInputMessageContent(getTextMessageCont(Constants.INLINE_MSG_TYPE_TRANSFER, name, sum, user, mc))
+//                .setId(Integer.toString(2))
+//                .setDescription(String.format( Constants.INLINE_TEXT_PTT, sum, name ))
+//                .setTitle(Constants.REMITTANCE_IMG_BTT_TEXT)
+//                .setThumbUrl(Constants.REMITTANCE_IMG_BTT_URL);
+//        results.add(transfer);
 
         return results;
     }
 
-    public void answerInlineQuery(String query, String id) {
+    public void answerInlineQuery(String query, String id, User user, int memCounts) {
         try {
             String digit = query.substring( 0, query.indexOf( " " ) );
             double sum = Double.valueOf( digit.replace( ",", "." ) );
             String name = query.substring( query.indexOf( " " ) + 1, query.length() );
 
-            AnswerInlineQuery answerInlineQuery = new AnswerInlineQuery();
-            answerInlineQuery.setInlineQueryId(id);
-            answerInlineQuery.setResults(getInlineResult(sum, name));
-            sender.execute( answerInlineQuery );
-        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
-            e.printStackTrace();
-        }
+            AnswerInlineQuery aiq = new AnswerInlineQuery()
+                    .setInlineQueryId(id)
+                    .setResults(getInlineResult(sum, name, user, memCounts));
+
+            sender.execute( aiq );
+        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {}
     }
 
 
@@ -117,8 +121,12 @@ public class ResponseHandler {
         return sm;
     }
 
-    public void sendAddUserMsg(long chatId) {
+    public void sendMsg(long chatId, String msg, boolean markdown) {
         try {
+            SendMessage sm = new SendMessage()
+                    .enableMarkdown( markdown )
+                    .setText(msg )
+                    .setChatId( chatId );
             sender.execute( getAddUserMsg(chatId));
         } catch (TelegramApiException e) {
             e.printStackTrace();
