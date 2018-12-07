@@ -39,7 +39,17 @@ public class Constants {
 
     public static final String INLINE_TEXT_PTT = "Cумма: %s \u20BD\nНаименование: %s ";
 
+    public static final String INLINE_BUY_MSG_TEXT_PTT = "#%s\n`Покупка`\n*%s*\n:euro: - %s \u20BD\n:bust_in_silhouette: - %s\n:busts_in_silhouette: - %s";
+    public static final String INLINE_BUY_MSG_TEXT_ALL = "Все пользователи";
+    //public static final String INLINE_BUY_MSG_TEXT_PTT_END = "\n:busts_in_silhouette: - %s";
 
-    public static final String INLINE_BUY_MSG_TEXT_PTT = "#%s\nПокупка:\n\n%s\n:euro: - %s \u20BD\n:bust_in_silhouette: - %s\n:busts_in_silhouette: - %s";
 
+    public static final String PURCHASE_MEMEBERS_BTT_TEXT = "Участники";
+    public static final String PURCHASE_MEMEBERS_BTT_CALLBACK = "show_purchase_member";
+
+    public static final String PURCHASE_EDIT_BTT_TEXT = "Радактировать";
+    public static final String PURCHASE_EDIT_BTT_CALLBACK = "edit_purchase";
+
+    public static final String PURCHASE_DELETE_BTT_TEXT = "Удалить";
+    public static final String PURCHASE_DELETE_BTT_CALLBACK = "delete_purchase";
 }

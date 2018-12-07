@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.ange.jointbuy.bot.JointBuyAbilityBot;
 import ru.ange.jointbuy.services.BotService;
+import ru.ange.jointbuy.test.ChannelHandlers;
 
 
 import java.net.Authenticator;
@@ -50,13 +51,7 @@ public class App {
             botOptions.setProxyHost(PROXY_HOST);
             botOptions.setProxyPort(PROXY_PORT);
 
-            //botsApi.registerBot(new JointBuyBot(botOptions, botService));
-            //botsApi.registerBot(new JointBuyCommandBot(botOptions, botService));
-            //botsApi.registerBot(new TestBot3(botOptions, botService));
-
             botsApi.registerBot(new JointBuyAbilityBot(botOptions, botService));
-
-
 
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();

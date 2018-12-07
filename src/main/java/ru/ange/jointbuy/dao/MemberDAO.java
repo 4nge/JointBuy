@@ -31,12 +31,17 @@ public class MemberDAO {
             "from " +
             "  Members " +
             "where " +
-            "  telegramChatId = :telegramChatId";
+            "    1=1 ";
+
+    private static final String GET_MEMBERS_CHAT_ID_FILTER = "" +
+            "  and telegramChatId = :telegramChatId ";
 
     public List<Member> getMembers(long chatId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("telegramChatId", chatId);
-        return npjdbc.query(GET_MEMBERS, params, MAP_MEMBER);
+        System.out.println("telegramChatId = " + chatId);
+
+        return npjdbc.query(GET_MEMBERS + GET_MEMBERS_CHAT_ID_FILTER, params, MAP_MEMBER);
     }
 
     private static final String ADD_MEMBER = "" +
@@ -61,5 +66,24 @@ public class MemberDAO {
         npjdbc.update( ADD_MEMBER, params, holder);
 
         return member.setId( holder.getKey().intValue() );
+    }
+
+    private static final String GET_MEMBERS_ID_FILTER = "" +
+            "  and ID = :id ";
+
+    public Member getMember(int id) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", id);
+        return npjdbc.queryForObject(GET_MEMBERS + GET_MEMBERS_ID_FILTER, params, MAP_MEMBER);
+    }
+
+
+    private static final String GET_MEMBERS_TELEGRAM_USER_ID_FILTER = "" +
+            "  and telegramUserId = :telegramUserId ";
+
+    public Member getMembersByTelegramId(int telegramUserId) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("telegramUserId", telegramUserId);
+        return npjdbc.queryForObject(GET_MEMBERS + GET_MEMBERS_TELEGRAM_USER_ID_FILTER, params, MAP_MEMBER);
     }
 }

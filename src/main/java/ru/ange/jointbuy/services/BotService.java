@@ -13,9 +13,11 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import ru.ange.jointbuy.exception.MemberAlreadyExistException;
 import ru.ange.jointbuy.pojo.Chat;
 import ru.ange.jointbuy.pojo.Member;
+import ru.ange.jointbuy.pojo.Purchase;
 import ru.ange.jointbuy.pojo.SystemMessage;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static java.lang.Math.toIntExact;
@@ -135,6 +137,13 @@ public class BotService {
             }
         }
         return this.addMember( addingUsers, chatId );
+    }
+
+    public Purchase addPurchase(String inlineMsgId, String name, double amount, User user, Date date) {
+        Member purchaser = dbService.getMembersByTelegramId( user.getId() );
+        //List<Member> members = dbService.getMembers( chatId );
+        Purchase purchase = new Purchase(inlineMsgId, purchaser, name, amount, date);
+        return dbService.addPurchase( purchase );
     }
 
 
