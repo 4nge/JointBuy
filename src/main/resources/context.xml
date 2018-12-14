@@ -42,18 +42,14 @@
         <property name="npjdbc" ref="npjdbc" />
     </bean>
 
-    <bean id="systemMessageDAO" class="ru.ange.jointbuy.dao.SystemMessageDAO">
-        <property name="npjdbc" ref="npjdbc" />
-    </bean>
-
     <bean id="purchaseDAO" class="ru.ange.jointbuy.dao.PurchaseDAO">
+        <property name="jdbc"   ref="jdbc" />
         <property name="npjdbc" ref="npjdbc" />
     </bean>
 
     <!-- Service -->
     <bean id="dbService" class="ru.ange.jointbuy.services.DbService">
         <property name="memberDAO"          ref="memberDAO" />
-        <property name="systemMessageDAO"   ref="systemMessageDAO" />
         <property name="purchaseDAO"        ref="purchaseDAO" />
     </bean>
 

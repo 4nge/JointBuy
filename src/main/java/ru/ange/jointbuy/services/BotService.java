@@ -1,26 +1,23 @@
 package ru.ange.jointbuy.services;
 
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+
+import com.vdurmont.emoji.EmojiParser;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-//import ru.ange.jointbuy.bot.msg.HelloMsgHelper;
-//import ru.ange.jointbuy.bot.msg.HelloUserMsgHelper;
 import ru.ange.jointbuy.exception.MemberAlreadyExistException;
-import ru.ange.jointbuy.pojo.Chat;
 import ru.ange.jointbuy.pojo.Member;
 import ru.ange.jointbuy.pojo.Purchase;
-import ru.ange.jointbuy.pojo.SystemMessage;
+import ru.ange.jointbuy.pojo.PurchaseMember;
+import ru.ange.jointbuy.pojo.PurchaseMemberList;
+import ru.ange.jointbuy.utils.Constants;
+import ru.ange.jointbuy.utils.StringFormater;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static java.lang.Math.toIntExact;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BotService {
 
@@ -88,14 +85,13 @@ public class BotService {
     }
 
 
-    public boolean handleAddUserBtt(Update upd, long chatId) {
+    public void handleAddUserBtt(Update upd, long chatId) throws MemberAlreadyExistException {
         User sender = upd.getCallbackQuery().getFrom();
         List<Member> members = this.getMembers( chatId );
-        if (!members.contains( sender )) {
-            this.addMember( sender, chatId );
-            return true;
+        if (members.contains( sender )) {
+            throw new MemberAlreadyExistException();
         } else {
-            return false;
+            this.addMember( sender, chatId );
         }
     }
 
@@ -139,123 +135,111 @@ public class BotService {
         return this.addMember( addingUsers, chatId );
     }
 
-    public Purchase addPurchase(String inlineMsgId, String name, double amount, User user, Date date) {
-        Member purchaser = dbService.getMembersByTelegramId( user.getId() );
-        //List<Member> members = dbService.getMembers( chatId );
-        Purchase purchase = new Purchase(inlineMsgId, purchaser, name, amount, date);
-        return dbService.addPurchase( purchase );
+
+    public void handleInlineAnswerMsg(long chatId, String text, User user) {
+        String format = StringFormater.removeMarkdownSyntax(
+                EmojiParser.parseToUnicode( Constants.INLINE_BUY_MSG_TEXT_PTT )
+        );
+
+        if (StringFormater.matchesFormatString( text, format )) {
+            List<String> params = StringFormater.extractParametersFromFormatString(text, format);
+            String name = params.get(1);
+            double amount = Double.valueOf(params.get(2));
+            Member purchaser = dbService.getMembersByTelegramId( user.getId() );
+            List<Member> members = dbService.getMembers( chatId );
+            Purchase existPurchase = dbService.getPurchase( name, amount, purchaser );
+
+            if (existPurchase != null) {
+                existPurchase.setTelegramChatId( chatId );
+                existPurchase.setMembers( members );
+                dbService.updatePurchase( existPurchase );
+            } else {
+                Purchase newPurchase = new Purchase(chatId, purchaser, name, amount, new Date(), members);
+                dbService.addPurchase( newPurchase );
+            }
+        }
     }
 
+    public void handleInlineAnswer(String inlineMsgId, String query, User user) {
+        String digit = query.substring( 0, query.indexOf( " " ) );
+        String name = query.substring( query.indexOf( " " ) + 1, query.length() );
+        double summ = Double.valueOf( digit.replace( ",", "." ) );
 
-//    public List<BotApiMethod> handleStartChat(long chatId, long messageId, User user) {
-//
-//        Member newMember = new Member(
-//                user.getId(),
-//                chatId,
-//                user.getFirstName(),
-//                user.getLastName(),
-//                new String());
-//
-//        List<Member> members = dbService.getMembers( chatId );
-//        if  (!members.contains( newMember )) {
-//            members.add( dbService.addMembers( newMember ) );
-//        }
-//
-//        List<BotApiMethod> result = new ArrayList<BotApiMethod>();
-////        result.add(new SendMessage( chatId, HelloMsgHelper.getMsg( members ) )
-////                .setReplyMarkup( HelloMsgHelper.getMarkup() ));
-//
-//        dbService.addMessage( new SystemMessage( chatId, messageId, 1 ) );
-//
-//        return result;
-//    }
-//
-//    public List<BotApiMethod> handleCallbackQuery(CallbackQuery cbq) {
-//        List<BotApiMethod> result = new ArrayList<BotApiMethod>();
-////        if (cbq.getData().equals( HelloMsgHelper.CALLBACK_DATA )) {
-////            long chatId = cbq.getMessage().getChatId();
-////            long messageId = cbq.getMessage().getMessageId();
-////            User sender = cbq.getFrom();
-////            String callId = cbq.getId();
-////            result.addAll( addUser(chatId, messageId, sender, callId) );
-////        }
-//        return result;
-//    }
-//
-//
-//
-//
-//
-//    public List<BotApiMethod> addUser(long chatId, long messageId, User user, String callId) {
-//        List<BotApiMethod> result = new ArrayList<BotApiMethod>();
-//
-//        Member newMember = new Member(
-//                user.getId(),
-//                chatId,
-//                user.getFirstName(),
-//                user.getLastName(),
-//                new String());
-//
-//        List<Member> members = dbService.getMembers(chatId);
-//        if  (!members.contains( newMember )) {
-//            members.add(dbService.addMembers( newMember ));
-//
-////            result.add(new EditMessageText()
-////                        .setChatId(chatId)
-////                        .setMessageId(toIntExact(messageId))
-////                        .setText( HelloMsgHelper.getMsg(members))
-////                        .setReplyMarkup( HelloMsgHelper.getMarkup()));
-//
-//            result.add(new AnswerCallbackQuery()
-//                    .setCallbackQueryId( callId )
-//                    .setText("Вы присодинились к списку участников"));
-//        } else {
-//            result.add(new AnswerCallbackQuery()
-//                    .setCallbackQueryId( callId )
-//                    .setText("Вы уже есть в списке участников"));
-//        }
-//        return result;
-//    }
-//
-//    public List<BotApiMethod> handleAddUser(long chatId, long messageId, User user) {
-//        List<BotApiMethod> result = new ArrayList<BotApiMethod>();
-//
-//        Member newMember = new Member(
-//                user.getId(),
-//                chatId,
-//                user.getFirstName(),
-//                user.getLastName(),
-//                new String());
-//
-//        List<Member> members = dbService.getMembers(chatId);
-//        if  (!members.contains( newMember )) {
-//            members.add( dbService.addMembers( newMember ) );
-//
-////            result.add(new SendMessage( chatId, HelloUserMsgHelper.getMsg( newMember.getFullName() ))
-////                .setReplyMarkup( HelloUserMsgHelper.getMarkup()));
-//
-////            // TODO добавить дли изминения уже существующих значений если даст API
-////            List<SystemMessage> helloMesages = dbService.getMessages(1);
-////            for (int j = 0; j < helloMesages.size() ; j++) {
-////                SystemMessage hmsg = helloMesages.get( j );
-////                result.add(new EditMessageText()
-////                    .setChatId(hmsg.getTelegramChatId())
-////                    .setMessageId(toIntExact(hmsg.getTelegramMsgId()))
-////                    .setText( HelloMsg.getMsg(members))
-////                    .setReplyMarkup( HelloMsg.getMarkup()));
-////            }
-//        }
-//
-//        return result;
-//    }
-//
-//
-//    public void enableAddUserMode(org.telegram.telegrambots.meta.api.objects.Chat chat) {
-//        Chat nc = new Chat( chat.getId(), true );
-//    }
-//
-//    public void handleNonCommandUpdate(Update update) {
-//
-//    }
+        Member purchaser = dbService.getMembersByTelegramId( user.getId() );
+        Purchase existPurchase = dbService.getPurchase(name, summ, purchaser);
+
+        if (existPurchase != null) {
+            existPurchase.setInlineMsgId( inlineMsgId );
+            dbService.updatePurchase( existPurchase );
+        } else {
+            Purchase newPurchase = new Purchase(inlineMsgId, purchaser, name, summ, new Date());
+            dbService.addPurchase( newPurchase );
+        }
+    }
+
+    public Purchase getPurchase(String inlineMsgId) {
+        return dbService.getPurchase(inlineMsgId);
+    }
+
+    public List<Purchase> getActivePurchases(long chatId) {
+        return dbService.getActivePurchases(chatId);
+    }
+
+    public PurchaseMemberList getPurchaseInvokeMember(Purchase purchase) {
+        List<Member> chatMembers = dbService.getMembers(purchase.getTelegramChatId());
+        PurchaseMemberList prMembers = new PurchaseMemberList();
+        for (Member chatMember : chatMembers) {
+            prMembers.add( new PurchaseMember( chatMember, purchase.getMembers().contains(chatMember)) );
+        }
+        return prMembers;
+    }
+
+    public void removeFromPurchase(String query) {
+        Pattern p = Pattern.compile("\\d+");
+        Matcher m = p.matcher(query);
+        int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
+        int purchaseID = m.find() ? Integer.parseInt( m.group() ) : 0;
+
+        dbService.removePurchaseMember(purchaseID, memberId);
+
+    }
+
+    public void addToPurchase(String query) {
+        Pattern p = Pattern.compile("\\d+");
+        Matcher m = p.matcher(query);
+        int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
+        int purchaseID = m.find() ? Integer.parseInt( m.group() ) : 0;
+
+        dbService.addPurchaseMember(purchaseID, memberId);
+    }
+
+    public void removePurchase(Purchase purchase) {
+        dbService.removePurchase(purchase);
+    }
+
+    public Purchase deactivePurchase(String inlineMsgId) {
+        Purchase purchase = dbService.getPurchase( inlineMsgId );
+        purchase.setActive( false );
+        return dbService.updatePurchase( purchase );
+    }
+
+    public Purchase activePurchase(String inlineMsgId) {
+        Purchase purchase = dbService.getPurchase( inlineMsgId );
+        purchase.setActive( true );
+        return dbService.updatePurchase( purchase );
+    }
+
+    public Purchase purchaseAddUser(String inlineMsgId, User user) throws MemberAlreadyExistException {
+        Purchase purchase = dbService.getPurchase( inlineMsgId );
+        Member member = dbService.getMembersByTelegramId( user.getId() );
+
+        if (purchase.getMembers().contains( member )) {
+            throw new MemberAlreadyExistException();
+        } else {
+            dbService.addPurchaseMember( purchase.getID(), member.getId() );
+            purchase.getMembers().add( member );
+            return purchase;
+        }
+    }
 
 }

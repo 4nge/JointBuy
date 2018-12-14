@@ -26,29 +26,34 @@ public class MemberDAO {
 
     private static final String GET_MEMBERS = "" +
             "select" +
-            "  ID, telegramUserId, telegramChatId, " +
-            "  firstName, lastName, alias " +
+            "    me.ID as me_ID, " +
+            "    me.telUserID as me_telUserID, " +
+            "    me.telChatID as me_telChatID, " +
+            "    me.firstName as me_firstName, " +
+            "    me.lastName as me_lastName, " +
+            "    me.alias as me_alias " +
             "from " +
-            "  Members " +
+            "    jointbuy.Members me " +
+            "    %s " +
             "where " +
             "    1=1 ";
 
     private static final String GET_MEMBERS_CHAT_ID_FILTER = "" +
-            "  and telegramChatId = :telegramChatId ";
+            "  and me.telChatId = :telChatID ";
 
     public List<Member> getMembers(long chatId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("telegramChatId", chatId);
-        System.out.println("telegramChatId = " + chatId);
+        params.addValue("telChatID", chatId);
 
-        return npjdbc.query(GET_MEMBERS + GET_MEMBERS_CHAT_ID_FILTER, params, MAP_MEMBER);
+        String query = String.format(GET_MEMBERS, "") + GET_MEMBERS_CHAT_ID_FILTER;
+        return npjdbc.query(query, params, MAP_MEMBER);
     }
 
     private static final String ADD_MEMBER = "" +
             "insert into Members values (" +
             "    default," +
-            "    :telegramUserId," +
-            "    :telegramChatId," +
+            "    :telUserID," +
+            "    :telChatID," +
             "    :firstName," +
             "    :lastName," +
             "    :alias" +
@@ -56,8 +61,8 @@ public class MemberDAO {
 
     public Member addMembers(Member member) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("telegramUserId", member.getTelegramUserId());
-        params.addValue("telegramChatId", member.getTelegramChatId());
+        params.addValue("telUserID", member.getTelegramUserId());
+        params.addValue("telChatID", member.getTelegramChatId());
         params.addValue("firstName", member.getFirstName());
         params.addValue("lastName", member.getLastName());
         params.addValue("alias", member.getAlias());
@@ -69,21 +74,42 @@ public class MemberDAO {
     }
 
     private static final String GET_MEMBERS_ID_FILTER = "" +
-            "  and ID = :id ";
+            "  and me.ID = :id ";
 
-    public Member getMember(int id) {
+    public Member getMember(int ID) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("id", id);
-        return npjdbc.queryForObject(GET_MEMBERS + GET_MEMBERS_ID_FILTER, params, MAP_MEMBER);
+        params.addValue("ID", ID);
+
+        String query = String.format(GET_MEMBERS, "") + GET_MEMBERS_ID_FILTER;
+
+        return npjdbc.queryForObject(query, params, MAP_MEMBER);
     }
 
 
     private static final String GET_MEMBERS_TELEGRAM_USER_ID_FILTER = "" +
-            "  and telegramUserId = :telegramUserId ";
+            "  and telUserID = :telUserID ";
 
     public Member getMembersByTelegramId(int telegramUserId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("telegramUserId", telegramUserId);
-        return npjdbc.queryForObject(GET_MEMBERS + GET_MEMBERS_TELEGRAM_USER_ID_FILTER, params, MAP_MEMBER);
+        params.addValue("telUserID", telegramUserId);
+
+        String query = String.format(GET_MEMBERS, "") + GET_MEMBERS_TELEGRAM_USER_ID_FILTER;
+
+        return npjdbc.queryForObject(query, params, MAP_MEMBER);
+    }
+
+    private static final String GET_MEMBERS_BY_PURCHASE_JOIN = "" +
+            "    inner join jointbuy.PurchaseMembers pm on me.ID = pm.memberID ";
+
+    private static final String GET_MEMBERS_BY_PURCHASE_FILTER = "" +
+            "    and pm.purchaseID = :purchaseID ";
+
+    public List<Member> getMembersByPurchaseID(int purchaseID) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("purchaseID", purchaseID);
+
+        String query = String.format(GET_MEMBERS, GET_MEMBERS_BY_PURCHASE_JOIN) + GET_MEMBERS_BY_PURCHASE_FILTER;
+
+        return npjdbc.query(query, params, MAP_MEMBER);
     }
 }

@@ -1,20 +1,17 @@
 package ru.ange.jointbuy.services;
 
-import ru.ange.jointbuy.dao.ChatDAO;
+
 import ru.ange.jointbuy.dao.MemberDAO;
 import ru.ange.jointbuy.dao.PurchaseDAO;
-import ru.ange.jointbuy.dao.SystemMessageDAO;
 import ru.ange.jointbuy.pojo.Member;
 import ru.ange.jointbuy.pojo.Purchase;
-import ru.ange.jointbuy.pojo.SystemMessage;
+
 
 import java.util.List;
 
 public class DbService {
 
     private MemberDAO memberDAO;
-    private SystemMessageDAO systemMessageDAO;
-    private ChatDAO chatDAO;
     private PurchaseDAO purchaseDAO;
 
     public MemberDAO getMemberDAO() {
@@ -22,18 +19,6 @@ public class DbService {
     }
     public void setMemberDAO(MemberDAO memberDAO) {
         this.memberDAO = memberDAO;
-    }
-    public SystemMessageDAO getSystemMessageDAO() {
-        return systemMessageDAO;
-    }
-    public void setSystemMessageDAO(SystemMessageDAO systemMessageDAO) {
-        this.systemMessageDAO = systemMessageDAO;
-    }
-    public ChatDAO getChatDAO() {
-        return chatDAO;
-    }
-    public void setChatDAO(ChatDAO chatDAO) {
-        this.chatDAO = chatDAO;
     }
     public void setPurchaseDAO(PurchaseDAO purchaseDAO) {
         this.purchaseDAO = purchaseDAO;
@@ -59,19 +44,42 @@ public class DbService {
         return memberDAO.getMembersByTelegramId( telegramUserId );
     }
 
-    public void addMessage(SystemMessage msg) {
-        systemMessageDAO.addMessage( msg );
-    }
-
-    public List<SystemMessage> getMessages() {
-        return systemMessageDAO.getMessages();
-    }
-
-    public List<SystemMessage> getMessages(int typeId) {
-        return systemMessageDAO.getMessages(typeId);
-    }
-
     public Purchase addPurchase(Purchase purchase) {
         return purchaseDAO.addPurchase( purchase );
+    }
+
+    public Purchase getPurchase(String name, double summ, Member purchaser) {
+        Purchase purchase = purchaseDAO.getPurchaseByParams( name, summ, purchaser );
+        if (purchase != null && purchase.getID() != 0) {
+            purchase.setMembers( memberDAO.getMembersByPurchaseID( purchase.getID() ) );
+        }
+        return purchase;
+    }
+
+    public Purchase getPurchase(String inlineMsgId) {
+        Purchase purchase = purchaseDAO.getPurchaseByInlineMsgId(inlineMsgId);
+        purchase.setMembers(memberDAO.getMembersByPurchaseID(purchase.getID()));
+        return purchase;
+    }
+
+
+    public Purchase updatePurchase(Purchase purchase) {
+        return purchaseDAO.updatePurchase( purchase );
+    }
+
+    public void removePurchaseMember(int purchaseID, int memberId) {
+        purchaseDAO.removeMembers(purchaseID, memberId);
+    }
+
+    public void addPurchaseMember(int purchaseID, int memberId) {
+        purchaseDAO.addMember(purchaseID, memberId);
+    }
+
+    public void removePurchase(Purchase purchase) {
+        purchaseDAO.removePurchase(purchase);
+    }
+
+    public List<Purchase> getActivePurchases(long chatId) {
+        return purchaseDAO.getActivePurchases(chatId);
     }
 }

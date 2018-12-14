@@ -1,35 +1,34 @@
 package ru.ange.jointbuy.bot;
 
-import com.vdurmont.emoji.EmojiParser;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.Flag;
 import org.telegram.abilitybots.api.objects.Reply;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.ange.jointbuy.bot.msg.AddUserMsg;
-import ru.ange.jointbuy.bot.msg.HelloMsg;
 import ru.ange.jointbuy.bot.response.ResponseHandler;
+import ru.ange.jointbuy.exception.MemberAlreadyExistException;
 import ru.ange.jointbuy.pojo.Member;
-import ru.ange.jointbuy.pojo.Operation;
 import ru.ange.jointbuy.pojo.Purchase;
+import ru.ange.jointbuy.pojo.PurchaseMember;
+import ru.ange.jointbuy.pojo.PurchaseMemberList;
 import ru.ange.jointbuy.services.BotService;
 import ru.ange.jointbuy.utils.Constants;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import static org.telegram.abilitybots.api.objects.Locality.ALL;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 import static org.telegram.abilitybots.api.util.AbilityUtils.getChatId;
+import static ru.ange.jointbuy.bot.Predicates.isHelloReply;
 
 public class JointBuyAbilityBot extends AbilityBot {
 
@@ -51,15 +50,37 @@ public class JointBuyAbilityBot extends AbilityBot {
     }
 
 
+    public Reply sayHello() {
+        Consumer<Update> action = upd -> {
+            long chatId = getChatId( upd );
+            List<Member> members = botService.getMembers( new ArrayList<User>(users().values()), chatId );
+            responseHandler.sendHelloMsg( chatId, members );
+        };
+        try {
+            User me = getMe();
+            return Reply.of(action, Predicates.isAddMyself(me));
+        } catch (TelegramApiException e) {
+            return null;
+        }
+    }
 
+    public Reply replyJoinBtt() {
+        Consumer<Update> action = upd -> {
+            String callId = upd.getCallbackQuery().getId();
+            try {
+                botService.handleAddUserBtt( upd, getChatId( upd ) );
+            } catch (MemberAlreadyExistException e) {
+                responseHandler.alertUserAlreadyExist( callId );
+            }
+        };
+        return Reply.of(action, isHelloReply());
+    }
 
-    // ----- Actions -----
-
-    public Ability addUser() {
+    public Ability addUsersCommand() {
         AddUserMsg addUserMsg = new AddUserMsg();
         return Ability.builder()
-                .name("addUser")
-                .info("add new users")
+                .name( Constants.ADD_USER_COMMAND_NAME )
+                .info( Constants.ADD_USER_COMMAND_DESCRIPTION )
                 .locality(ALL)
                 .privacy(PUBLIC)
                 .action(ctx -> {
@@ -67,31 +88,29 @@ public class JointBuyAbilityBot extends AbilityBot {
                 })
                 .reply(upd -> {
                     botService.handleAddUserCommand(upd, getChatId( upd ));
-                }, Flag.MESSAGE, Flag.REPLY, isReplyToBot(), isReplyToMessage(addUserMsg.getText()))
+                }, Flag.MESSAGE, Flag.REPLY, Predicates.isReplyToBot(getBotUsername()),
+                        Predicates.isReplyToMessage(addUserMsg.getText()))
                 .build();
     }
 
-    public Reply sayHello() {
-        Consumer<Update> action = upd -> {
-            long chatId = getChatId( upd );
-            List<Member> members = botService.getMembers( new ArrayList<User>(users().values()), chatId );
-            responseHandler.sendHelloMsg( chatId, members );
-        };
-        return Reply.of(action, isAddMyself());
+    public Ability listPurchasesCommand() {
+        return Ability.builder()
+                .name( Constants.LIST_PURCHASES_COMMAND_NAME )
+                .info( Constants.LIST_PURCHASES_COMMAND_DESCRIPTION )
+                .locality(ALL)
+                .privacy(PUBLIC)
+                .action(ctx -> {
+                    long chatId = ctx.chatId();
+                    List<Purchase> purchases = botService.getActivePurchases(chatId);
+                    responseHandler.answerListCommand(chatId, purchases);
+                })
+                .build();
     }
 
 
-    public Reply replyAddUserBtt() {
-        Consumer<Update> action = upd -> {
-            String callId = upd.getCallbackQuery().getId();
-            boolean alreadyExist = botService.handleAddUserBtt( upd, getChatId( upd ) );
-            if (alreadyExist)
-                responseHandler.answerUserAlreadyExist( callId );
-            else
-                responseHandler.answerAddUser( callId );
-        };
-        return Reply.of(action, isHelloReply());
-    }
+
+
+
 
     public Reply handleInlineQuery() {
         Consumer<Update> action = upd -> {
@@ -99,133 +118,167 @@ public class JointBuyAbilityBot extends AbilityBot {
             User user = inlineQuery.getFrom();
             responseHandler.answerInlineQuery(inlineQuery.getQuery(), inlineQuery.getId(), user);
         };
-        return Reply.of(action, isInlineQuery());
+        return Reply.of(action, Predicates.isInlineQuery());
     }
 
+    public Reply handleInlineAnswerMsg() {
+        Consumer<Update> action = upd -> {
+            long chatId = getChatId( upd );
+            Message msg = upd.getMessage();
+            String text = msg.getText();
+            User from = msg.getFrom();
+            botService.handleInlineAnswerMsg( chatId, text, from );
+        };
+        return Reply.of(action, Predicates.isInlineAnswer());
+    }
 
     public Reply handleInlineAnswer() {
         Consumer<Update> action = upd -> {
             String inlineMsgId = upd.getChosenInlineQuery().getInlineMessageId();
             String query = upd.getChosenInlineQuery().getQuery();
             User from = upd.getChosenInlineQuery().getFrom();
-
-            String digit = query.substring( 0, query.indexOf( " " ) );
-            String name = query.substring( query.indexOf( " " ) + 1, query.length() );
-            double summ = Double.valueOf( digit.replace( ",", "." ) );
-
-            botService.addPurchase(inlineMsgId, name, summ, from, new Date());
+            botService.handleInlineAnswer( inlineMsgId, query, from );
         };
         return Reply.of(action, Flag.CHOSEN_INLINE_QUERY);
     }
 
-    public Reply handleInlineAnswerMsg() {
+    public Reply handlePurchaseJoinUser() {
         Consumer<Update> action = upd -> {
-//            long chatId = getChatId( upd );
-//
-//            System.out.println("handleInlineAnswer : upd = " + upd);
-//
-//            Message msg = upd.getMessage();
-//            String text = msg.getText();
-//            User from = msg.getFrom();
-//
-//            String lines[] = text.split("[\r\n]+");
-//            String type = lines[1].trim();
-//            String name = lines[2].trim();
-//            double summ = Double.valueOf(lines[3]
-//                    .replace("\uD83D\uDCB6", "" )
-//                    .replace("-", "" )
-//                    .replace("\u20BD", "" )
-//                    .trim());
-//
-//            System.out.println("handleInlineAnswer : msg = " + msg);
-//
-//            botService.addPurchase(chatId, name, summ, from,  new Date());
-//            responseHandler.editAnswerInlineQuery(chatId, msg.getMessageId(), name, summ, from);
-            // TODO update chat id for handleInlineAnswer() purshase
-        };
-        return Reply.of(action, isInlineAnswer());
-    }
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String callId = callbackQuery.getId();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+            User user = callbackQuery.getFrom();
 
-    public Reply handleShowPurshaceMembersCallback() {
-        Consumer<Update> action = upd -> {
-
-            System.out.println("handleShowPurshaceMembersCallback");
-            System.out.println("getCallbackQuery = " + upd.getCallbackQuery());
-
-            EditMessageText emt = new EditMessageText()
-                    .enableMarkdown( true )
-                    .setInlineMessageId( upd.getCallbackQuery().getInlineMessageId() )
-                    .setText( "Test" );
-        try {
-            sender.execute( emt );
-        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
-            e.printStackTrace();
-        }
-
-        };
-        return Reply.of(action, isPurchaseMembersCallback());
-    }
-
-
-
-    // ----- Predicates -----
-
-    private Predicate<Update> isHelloReply() {
-        return Flag.CALLBACK_QUERY.and( upd -> upd.getCallbackQuery().getData().equals( HelloMsg.CALLBACK_DATA ) );
-    }
-
-    private Predicate<Update> isAddNewMember() {
-        return upd -> upd.hasMessage() && upd.getMessage().getNewChatMembers() != null;
-    }
-
-    private Predicate<Update> isAddMyself() {
-        try {
-            User me = getMe();
-            return isAddNewMember().and( upd -> upd.getMessage().getNewChatMembers().contains( me ) );
-        } catch (TelegramApiException e) {
-            return upd -> false;
-        }
-    }
-
-    private Predicate<Update> isInlineQuery() {
-        return upd -> upd.hasInlineQuery() && upd.getInlineQuery().hasQuery();
-    }
-
-    private Predicate<Update> isReplyToMessage(String message) {
-        return upd -> {
-            Message reply = upd.getMessage().getReplyToMessage();
-            return reply.hasText() && reply.getText().trim().equalsIgnoreCase(message.trim());
-        };
-    }
-
-    private Predicate<Update> isReplyToBot() {
-        return upd -> upd.getMessage().getReplyToMessage().getFrom().getUserName().equalsIgnoreCase(getBotUsername());
-    }
-
-    private Predicate<Update> isInlineAnswer() {
-        // TODO try do on inline msg ID
-        return Flag.MESSAGE.and(upd -> {
-            if (upd.hasMessage() && upd.getMessage().hasText()) {
-                String text = upd.getMessage().getText();
-                String regex = EmojiParser.parseToUnicode(Constants.INLINE_BUY_MSG_TEXT_PTT)
-                        .replace( "`", "" )     // replace markdown symbols
-                        .replace( "*", "" )     // replace markdown symbols
-                        .replace( "_", "" )     // replace markdown symbols
-                        .replace("%s",".*" );   // replace String parameters
-
-                return text.matches( EmojiParser.parseToUnicode(regex) );
+            try {
+                botService.purchaseAddUser( inlineMsgId, user );
+                responseHandler.alertPurchaseJoinUser(callId);
+            } catch (MemberAlreadyExistException e) {
+                responseHandler.alertPurchaseExistUser(callId);
             }
-            return false;
-        });
+
+        };
+        return Reply.of(action, Predicates.isPurchaseJoinCallback());
     }
 
 
+    public Reply handlePurchaseJoinOutUser() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String callId = callbackQuery.getId();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+            User user = callbackQuery.getFrom();
+
+            Purchase pr = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
+
+            if (currentMembers.getInvolvedCount() == 1) {
+                responseHandler.alertLastPurchaseMember(callId);
+            } else {
+                // TODO if user not contains  remove
+            }
+        };
+        return Reply.of(action, Predicates.isPurchaseJoinOutCallback());
+    }
 
 
-    private Predicate<Update> isPurchaseMembersCallback() {
-        return Flag.CALLBACK_QUERY.and(upd -> {
-            return upd.getCallbackQuery().getData().equals( Constants.PURCHASE_MEMEBERS_BTT_CALLBACK );
-        });
+    public Reply handleEditPurchase() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase purchase = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+
+            responseHandler.handleEditPurchase(inlineMsgId, purchase, prMembers);
+        };
+        return Reply.of(action, Predicates.isEditPurchaseCallback());
+    }
+
+
+    public Reply handleShowPurchaseMembers() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase purchase = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
+        };
+        return Reply.of(action, Predicates.isPurchaseMembersCallback());
+    }
+
+    public Reply handleBackCallback() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase purchase = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+
+            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
+        };
+        return Reply.of(action, Predicates.isBackCallback());
+    }
+
+
+    public Reply handleRemoveMemberFromPurchase() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String callId = callbackQuery.getId();
+            String query = upd.getCallbackQuery().getData();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase pr = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
+
+            if (currentMembers.getInvolvedCount() == 1) {
+                responseHandler.alertLastPurchaseMember(callId);
+            } else {
+                botService.removeFromPurchase(query);
+                responseHandler.showPurchaseMembers(inlineMsgId, pr, botService.getPurchaseInvokeMember(pr));
+            }
+        };
+        return Reply.of(action, Predicates.isMemberRemoveFromPurchaseCallback());
+    }
+
+    public Reply handleAddMemberToPurchase() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String query = upd.getCallbackQuery().getData();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            botService.addToPurchase(query);
+
+            Purchase purchase = botService.getPurchase( inlineMsgId );
+            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+
+            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
+        };
+        return Reply.of(action, Predicates.isMemberAddToPurchaseCallback());
+    }
+
+    public Reply handleRemovePurchase() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase purchase = botService.deactivePurchase(inlineMsgId);
+            responseHandler.handleRemovePurchase(inlineMsgId, purchase);
+        };
+        return Reply.of(action, Predicates.isPurchaseRemoveCallback());
+    }
+
+    public Reply handleRestorePurchase() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Purchase purchase = botService.activePurchase(inlineMsgId);
+            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+
+            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
+        };
+        return Reply.of(action, Predicates.isPurchaseRestoreCallback());
     }
 
 }

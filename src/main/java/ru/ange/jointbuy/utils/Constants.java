@@ -1,5 +1,7 @@
 package ru.ange.jointbuy.utils;
 
+import ru.ange.jointbuy.bot.JointBuyAbilityBot;
+
 public class Constants {
 
 
@@ -34,22 +36,59 @@ public class Constants {
 
     private static final String USER_LIST_MSG_PTT = " :bust_in_silhouette: %s %s\n";
 
-    public static final String ADD_USER_CALLBACK_ANSWER = "Вы присодинились к списку участников";
-    public static final String USER_EXIST_CALLBACK_ANSWER = "Вы уже есть в списке участников";
+    public static final String ADD_USER_CALLBACK_ALERT = "Вы присодинились к списку участников";
+    public static final String USER_EXIST_CALLBACK_ALERT = "Вы уже есть в списке участников";
+
+    public static final String PURCHASE_ADD_USER_CALLBACK_ALERT = "Вы присодинились к покупке";
+    public static final String PURCHASE_EXIST_USER_CALLBACK_ALERT = "Вы уже являетесь участником этой покупки";
+
+    public static final String ADD_USER_COMMAND_NAME = "add";
+    public static final String ADD_USER_COMMAND_DESCRIPTION = "Добавить новых пользователей";
+
+    public static final String LIST_PURCHASES_COMMAND_NAME = "list";
+    public static final String LIST_PURCHASES_COMMAND_DESCRIPTION = "Показать список покупок";
+
 
     public static final String INLINE_TEXT_PTT = "Cумма: %s \u20BD\nНаименование: %s ";
 
-    public static final String INLINE_BUY_MSG_TEXT_PTT = "#%s\n`Покупка`\n*%s*\n:euro: - %s \u20BD\n:bust_in_silhouette: - %s\n:busts_in_silhouette: - %s";
-    public static final String INLINE_BUY_MSG_TEXT_ALL = "Все пользователи";
-    //public static final String INLINE_BUY_MSG_TEXT_PTT_END = "\n:busts_in_silhouette: - %s";
+    public static final String INLINE_BUY_MSG_TEXT_PTT = "#%s\n`Покупка`\n\uD83C\uDFF7️ - *%s*\n:euro: - %s \u20BD\n:busts_in_silhouette: - %s\n:bust_in_silhouette: - %s";
+    public static final String INLINE_BUY_MSG_TEXT_ALL = "Все";
+    public static final String INLINE_BUY_MSG_TEXT_COUNT = "%s / %s";
 
+    public static final String PURCHASE_JOIN_BTT_TEXT = "\uD83D\uDE4B\u200D♂️";
+    public static final String PURCHASE_JOIN_CALLBACK = "purchase_join";
 
-    public static final String PURCHASE_MEMEBERS_BTT_TEXT = "Участники";
-    public static final String PURCHASE_MEMEBERS_BTT_CALLBACK = "show_purchase_member";
+    public static final String PURCHASE_JOIN_OUT_BTT_TEXT = "\uD83D\uDE45\u200D♂️️";
+    public static final String PURCHASE_JOIN_OUT_CALLBACK = "purchase_join_out";
 
-    public static final String PURCHASE_EDIT_BTT_TEXT = "Радактировать";
+    public static final String PURCHASE_MEMBERS_BTT_TEXT = ":busts_in_silhouette: Участники";
+    public static final String PURCHASE_MEMBERS_BTT_CALLBACK = "show_purchase_member";
+
+    public static final String PURCHASE_EDIT_BTT_TEXT = ":pencil: Радактировать";
     public static final String PURCHASE_EDIT_BTT_CALLBACK = "edit_purchase";
 
-    public static final String PURCHASE_DELETE_BTT_TEXT = "Удалить";
-    public static final String PURCHASE_DELETE_BTT_CALLBACK = "delete_purchase";
+    public static final String DELETE_PURCHASE_BTT_TEXT = "\uD83D\uDDD1️ Удалить";
+    public static final String DELETE_PURCHASE_CALLBACK = "delete_purchase";
+
+    public static final String BACK_BTT_TEXT = ":arrow_left: Назад";
+    public static final String BACK_BTT_CALLBACK  = "members_back";
+
+    public static final String IMPROVED_MEMBER_PTT = ":ballot_box_with_check: %s";
+    public static final String NOT_IMPROVED_MEMBER_PTT = ":white_medium_square: %s";
+
+    public static final String REMOVE_FROM_PURCHASE_CALLBACK_PTT  = "remove_from_purchase_mID_%s_prId_%s";
+    public static final String ADD_TO_PURCHASE_CALLBACK_PTT = "add_to_purchase_mID_%s_prId_%s";
+
+    public static final String AT_LEAST_ONE_MEMBER_ALERT = "У покупки должен быть хотя бы один участник";
+
+    public static final String DELETED_PURCHASE_MSG = "#%s\n`Покупка удалена`";
+
+    public static final String RESTORE_PURCHASE_BTT_TEXT = ":leftwards_arrow_with_hook: Востановить";
+    public static final String RESTORE_PURCHASE_CALLBACK = "restore_purchase";
+
+
+    public static final String LIST_PURCHASES_MSG_EMPTY = "Список покупок пока пуст. Для добавления новых записей наберите '@" + JointBuyAbilityBot.NAME + " сумма Наименование покупки'";
+
+    public static final String LIST_PURCHASES_MSG_PTT = "Список покупок:%s\n\n `ИТОГО (%s) : ` *%s* \u20BD";
+    public static final String LIST_PURCHASE_LINE_PTT = "\n\n#%s\n:euro: %s \u20BD : \uD83C\uDFF7️ *%s*";
 }

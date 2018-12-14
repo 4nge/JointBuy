@@ -9,12 +9,12 @@ import java.sql.SQLException;
 public class MemberMapper implements RowMapper<Member> {
     @Override
     public Member mapRow(ResultSet rs, int i) throws SQLException {
-        int id = rs.getInt( "ID" );
-        int telegramUserId  = rs.getInt( "telegramUserId" );
-        long telegramChatId = rs.getLong( "telegramChatId" );
-        String firstName  = rs.getString( "firstName" );
-        String lastName = rs.getString( "lastName" );
-        String alias = rs.getString( "alias" );
+        int id = rs.getInt( "me_ID" );
+        int telegramUserId  = rs.getInt( "me_telUserId" );
+        long telegramChatId = rs.getLong( "me_telChatId" );
+        String firstName  = rs.getString( "me_firstName" );
+        String lastName = rs.getString( "me_lastName" );
+        String alias = rs.getString( "me_alias" );
 
         return new Member(id, telegramUserId, telegramChatId, firstName, lastName, alias);
     }

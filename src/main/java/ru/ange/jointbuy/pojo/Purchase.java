@@ -7,22 +7,33 @@ import java.util.List;
 public class Purchase extends Operation {
 
     private int ID;
-    private long telegramChatId;
+    private Long telegramChatId;
     private String inlineMsgId;
     private Date date;
     private Member purchaser;
+    private List<Member> members;
+    private boolean active;
 
     public Purchase() {
-        this(0, 0, "", new Member(), "", 0.0, null);
+        this(0, null, "", new Member(), "", 0.0, null);
     }
 
-    public Purchase(String inlineMessageId, Member purchaser, String name, double amount, Date date) {
-
-        this(0, 0, inlineMessageId, purchaser, name, amount, date);
+    public Purchase(long chatId, Member purchaser, String name, double amount, Date date, List<Member> members) {
+        this(0, chatId, "", purchaser, name, amount, date, members, true);
     }
 
-    public Purchase(int ID, long telegramChatId, String inlineMsgId, Member purchaser,
+    public Purchase(String inlineMsgId, Member purchaser, String name, double amount, Date date) {
+        this(0, null, "", purchaser,
+                name, amount, date, new ArrayList<Member>(), true);
+    }
+
+    public Purchase(int ID, Long telegramChatId, String inlineMsgId, Member purchaser,
                     String name, double amount, Date date) {
+        this(ID, telegramChatId, inlineMsgId, purchaser, name, amount, date, new ArrayList<Member>(), true);
+    }
+
+    public Purchase(int ID, Long telegramChatId, String inlineMsgId, Member purchaser,
+                    String name, double amount, Date date, List<Member> members, boolean active) {
 
         super( Type.PURCHASE );
         super.setName( name );
@@ -32,6 +43,8 @@ public class Purchase extends Operation {
         this.inlineMsgId = inlineMsgId;
         this.purchaser = purchaser;
         this.date = date;
+        this.members = members;
+        this.active = active;
     }
 
     public int getID() {
@@ -76,6 +89,24 @@ public class Purchase extends Operation {
 
     public Purchase setInlineMsgId(String inlineMsgId) {
         this.inlineMsgId = inlineMsgId;
+        return this;
+    }
+
+    public List<Member> getMembers() {
+        return members;
+    }
+
+    public Purchase setMembers(List<Member> members) {
+        this.members = members;
+        return this;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public Purchase setActive(boolean active) {
+        this.active = active;
         return this;
     }
 

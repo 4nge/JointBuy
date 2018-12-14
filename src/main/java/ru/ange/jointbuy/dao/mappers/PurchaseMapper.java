@@ -16,15 +16,18 @@ public class PurchaseMapper implements RowMapper<Purchase> {
     @Override
     public Purchase mapRow(ResultSet rs, int i) throws SQLException {
 
-        int ID = rs.getInt( "ID" );
-        long tcID = rs.getLong( "telegramChatId" );
-        String name = rs.getString( "name" );
-        double amount = rs.getDouble( "amount" );
-        Date date = rs.getDate( "purchaseDate" );
+        int ID = rs.getInt("pr_ID" );
+        long telChatId = rs.getLong("pr_telChatId" );
+        String inlineMsgId = rs.getString("pr_telInlineMsgID" );
+        String name = rs.getString("pr_name" );
+        double amount = rs.getDouble("pr_amount" );
+        Date date = rs.getDate("pr_purchaseDate" );
+        boolean active = rs.getBoolean("active" );
 
         Member purchaser = MAP_MEMBER.mapRow( rs, i );
-
-        //return new Purchase( ID, tcID, purchaser, name, amount, date);
-        return null;
+        return new Purchase(ID, telChatId, inlineMsgId, purchaser, name, amount, date);
     }
+
+
+
 }
