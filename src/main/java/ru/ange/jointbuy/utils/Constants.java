@@ -5,11 +5,22 @@ import ru.ange.jointbuy.bot.JointBuyAbilityBot;
 public class Constants {
 
 
+    // ------ inline actions ------
+
     public static final String BUY_IMG_BTT_URL = "https://image.ibb.co/jpLPpf/buy.png";
     public static final String REMITTANCE_IMG_BTT_URL = "https://image.ibb.co/dyyzN0/remittance.png";
 
     public static final String BUY_IMG_BTT_TEXT = "Добавить покупку";
     public static final String REMITTANCE_IMG_BTT_TEXT = "Добавить перевод";
+
+
+    // ------ Remittance ------
+
+    public static final String REMITTANCE_INLINE_MSG_TEXT_PTT = "#remittance_%s\nПеревод\n:euro: - %s \u20BD\n:incoming_envelope: - %s\n\nВыберите получателя:";
+
+    public static final String REMITTANCE_RECIPIENT_BTT_PTT = ":bust_in_silhouette: %s";
+    public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK = "remittance_recipient_remId_%s_recID_%s";
+
 
 
     public static final String ADD_USER_MSG =
@@ -46,14 +57,22 @@ public class Constants {
     public static final String ADD_USER_COMMAND_DESCRIPTION = "Добавить новых пользователей";
 
     public static final String LIST_PURCHASES_COMMAND_NAME = "list";
-    public static final String LIST_PURCHASES_COMMAND_DESCRIPTION = "Показать список покупок";
+    public static final String LIST_PURCHASES_COMMAND_DESCRIPTION = "Показать список операций";
 
+    public static final String SPLIT_PURCHASES_COMMAND_NAME = "split";
+    public static final String SPLIT_PURCHASES_COMMAND_DESCRIPTION = "Разбить счет";
 
-    public static final String INLINE_TEXT_PTT = "Cумма: %s \u20BD\nНаименование: %s ";
+    public static final String INLINE_PURCH_TEXT_PTT = "Cумма: %s \u20BD\nНаименование: %s ";
+    public static final String INLINE_REMIT_TEXT_PTT = "Cумма: %s \u20BD";
+    public static final String INLINE_REMIT_DESC_TEXT_PTT = "Cумма: %s \u20BD\nОписание: %s ";
+
+    //public static final String INLINE_REMITTANCE_MSG_TEXT_PTT = "#remittance%_s\nПеревод\n:euro: - %s \u20BD\n:incoming_envelope: - %s\n:mailbox_with_mail: - %s";
+
 
     public static final String INLINE_BUY_MSG_TEXT_PTT = "#%s\n`Покупка`\n\uD83C\uDFF7️ - *%s*\n:euro: - %s \u20BD\n:busts_in_silhouette: - %s\n:bust_in_silhouette: - %s";
     public static final String INLINE_BUY_MSG_TEXT_ALL = "Все";
     public static final String INLINE_BUY_MSG_TEXT_COUNT = "%s / %s";
+
 
     public static final String PURCHASE_JOIN_BTT_TEXT = "\uD83D\uDE4B\u200D♂️";
     public static final String PURCHASE_JOIN_CALLBACK = "purchase_join";
@@ -86,9 +105,17 @@ public class Constants {
     public static final String RESTORE_PURCHASE_BTT_TEXT = ":leftwards_arrow_with_hook: Востановить";
     public static final String RESTORE_PURCHASE_CALLBACK = "restore_purchase";
 
-
     public static final String LIST_PURCHASES_MSG_EMPTY = "Список покупок пока пуст. Для добавления новых записей наберите '@" + JointBuyAbilityBot.NAME + " сумма Наименование покупки'";
 
     public static final String LIST_PURCHASES_MSG_PTT = "Список покупок:%s\n\n `ИТОГО (%s) : ` *%s* \u20BD";
     public static final String LIST_PURCHASE_LINE_PTT = "\n\n#%s\n:euro: %s \u20BD : \uD83C\uDFF7️ *%s*";
+
+    public static final String SPLIT_MEMBER_PTT = "\n*%s* `потратил` *%s* \u20BD%s";
+    public static final String SPLIT_MEMBER_SHOULD = "`; тебе должны:`\n%s";
+    public static final String SPLIT_MEMBER_SHOULD_NONE = "`; тебе никто не должен.`";
+
+
+    //public static final String SPLIT_DEBTOR_PTT = ":bust_in_silhouette: %s - :euro: %s \u20BD\n";
+    public static final String SPLIT_DEBTOR_PTT = "- %s - %s \u20BD\n";
+    public static final String SPLIT_DEBTORS_NONE = "Никто никому ничего не должен";
 }

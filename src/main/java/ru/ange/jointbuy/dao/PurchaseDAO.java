@@ -57,8 +57,6 @@ public class PurchaseDAO {
         TransactionTemplate dwhtt = new TransactionTemplate( dwhtm );
         dwhtt.setPropagationBehavior( TransactionDefinition.PROPAGATION_REQUIRES_NEW );
 
-        System.out.println("addPurchase - purchase.getName()" + purchase.getName());
-
         purchase.setID( dwhtt.execute( status -> {
 
             MapSqlParameterSource params = new MapSqlParameterSource()

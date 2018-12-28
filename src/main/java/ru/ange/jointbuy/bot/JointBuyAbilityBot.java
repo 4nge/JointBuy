@@ -14,10 +14,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.ange.jointbuy.bot.msg.AddUserMsg;
 import ru.ange.jointbuy.bot.response.ResponseHandler;
 import ru.ange.jointbuy.exception.MemberAlreadyExistException;
-import ru.ange.jointbuy.pojo.Member;
-import ru.ange.jointbuy.pojo.Purchase;
-import ru.ange.jointbuy.pojo.PurchaseMember;
-import ru.ange.jointbuy.pojo.PurchaseMemberList;
+import ru.ange.jointbuy.pojo.*;
 import ru.ange.jointbuy.services.BotService;
 import ru.ange.jointbuy.utils.Constants;
 
@@ -76,6 +73,8 @@ public class JointBuyAbilityBot extends AbilityBot {
         return Reply.of(action, isHelloReply());
     }
 
+    // ------ Commands ------
+
     public Ability addUsersCommand() {
         AddUserMsg addUserMsg = new AddUserMsg();
         return Ability.builder()
@@ -93,7 +92,7 @@ public class JointBuyAbilityBot extends AbilityBot {
                 .build();
     }
 
-    public Ability listPurchasesCommand() {
+    public Ability listOperationCommand() {
         return Ability.builder()
                 .name( Constants.LIST_PURCHASES_COMMAND_NAME )
                 .info( Constants.LIST_PURCHASES_COMMAND_DESCRIPTION )
@@ -108,9 +107,23 @@ public class JointBuyAbilityBot extends AbilityBot {
     }
 
 
+    public Ability spitPurchasesCommand() {
+        return Ability.builder()
+                .name( Constants.SPLIT_PURCHASES_COMMAND_NAME )
+                .info( Constants.SPLIT_PURCHASES_COMMAND_DESCRIPTION )
+                .locality(ALL)
+                .privacy(PUBLIC)
+                .action(ctx -> {
+                    long chatId = ctx.chatId();
+                    List<Purchase> purchases = botService.getActivePurchases(chatId);
+                    List<Member> members = botService.getMembers( chatId );
+                    responseHandler.answerSplitCommand(chatId, members, purchases);
+                })
+                .build();
+    }
 
 
-
+    // ------ inline actions ------
 
     public Reply handleInlineQuery() {
         Consumer<Update> action = upd -> {
@@ -121,164 +134,210 @@ public class JointBuyAbilityBot extends AbilityBot {
         return Reply.of(action, Predicates.isInlineQuery());
     }
 
-    public Reply handleInlineAnswerMsg() {
+
+    // ------ Remittance ------
+
+    public Reply handleRemittanceInlineAnswerMsg() {
         Consumer<Update> action = upd -> {
             long chatId = getChatId( upd );
             Message msg = upd.getMessage();
-            String text = msg.getText();
-            User from = msg.getFrom();
-            botService.handleInlineAnswerMsg( chatId, text, from );
+
+            Remittance remittance = botService.addRemittance( chatId, msg );
+            List<Member> members = botService.getMembers( chatId );
+            responseHandler.handleRemittanceMsg(msg, remittance, members);
         };
-        return Reply.of(action, Predicates.isInlineAnswer());
+        return Reply.of(action, Predicates.isInlineRemittanceAnswer());
     }
 
-    public Reply handleInlineAnswer() {
+    public Reply handleRemittanceSetRecipient() {
         Consumer<Update> action = upd -> {
-            String inlineMsgId = upd.getChosenInlineQuery().getInlineMessageId();
-            String query = upd.getChosenInlineQuery().getQuery();
-            User from = upd.getChosenInlineQuery().getFrom();
-            botService.handleInlineAnswer( inlineMsgId, query, from );
-        };
-        return Reply.of(action, Flag.CHOSEN_INLINE_QUERY);
-    }
+            long chatId = getChatId( upd );
 
-    public Reply handlePurchaseJoinUser() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String callId = callbackQuery.getId();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-            User user = callbackQuery.getFrom();
+            System.out.println("upd = " + upd);
 
-            try {
-                botService.purchaseAddUser( inlineMsgId, user );
-                responseHandler.alertPurchaseJoinUser(callId);
-            } catch (MemberAlreadyExistException e) {
-                responseHandler.alertPurchaseExistUser(callId);
-            }
 
         };
-        return Reply.of(action, Predicates.isPurchaseJoinCallback());
+        return Reply.of(action, Predicates.isRemittanceSetRecipientCallback());
     }
 
 
-    public Reply handlePurchaseJoinOutUser() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String callId = callbackQuery.getId();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-            User user = callbackQuery.getFrom();
-
-            Purchase pr = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
-
-            if (currentMembers.getInvolvedCount() == 1) {
-                responseHandler.alertLastPurchaseMember(callId);
-            } else {
-                // TODO if user not contains  remove
-            }
-        };
-        return Reply.of(action, Predicates.isPurchaseJoinOutCallback());
-    }
 
 
-    public Reply handleEditPurchase() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
 
-            Purchase purchase = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
-
-            responseHandler.handleEditPurchase(inlineMsgId, purchase, prMembers);
-        };
-        return Reply.of(action, Predicates.isEditPurchaseCallback());
-    }
-
-
-    public Reply handleShowPurchaseMembers() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Purchase purchase = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
-            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
-        };
-        return Reply.of(action, Predicates.isPurchaseMembersCallback());
-    }
-
-    public Reply handleBackCallback() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Purchase purchase = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
-
-            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
-        };
-        return Reply.of(action, Predicates.isBackCallback());
-    }
+//    public Reply handleInlineAnswerPurchaseMsg() {
+//        Consumer<Update> action = upd -> {
+//            long chatId = getChatId( upd );
+//            Message msg = upd.getMessage();
+//            String text = msg.getText();
+//            User from = msg.getFrom();
+//            botService.handleInlineAnswerPurchaseMsg( chatId, text, from );
+//        };
+//        return Reply.of(action, Predicates.isInlinePutchaseAnswer());
+//    }
 
 
-    public Reply handleRemoveMemberFromPurchase() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String callId = callbackQuery.getId();
-            String query = upd.getCallbackQuery().getData();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
 
-            Purchase pr = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
+//    public Reply handleInlineAnswer() {
+//        Consumer<Update> action = upd -> {
+//            String resultId = upd.getChosenInlineQuery().getResultId();
+//            String inlineMsgId = upd.getChosenInlineQuery().getInlineMessageId();
+//            String query = upd.getChosenInlineQuery().getQuery();
+//            User from = upd.getChosenInlineQuery().getFrom();
+//
+//            botService.handleInlineAnswerPurchase( inlineMsgId, query, from );
+//        };
+//        return Reply.of(action, Flag.CHOSEN_INLINE_QUERY);
+//    }
+//
+//    public Reply handlePurchaseJoinUser() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String callId = callbackQuery.getId();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//            User user = callbackQuery.getFrom();
+//
+//            try {
+//                botService.purchaseAddUser( inlineMsgId, user );
+//                responseHandler.alertPurchaseJoinUser(callId);
+//            } catch (MemberAlreadyExistException e) {
+//                responseHandler.alertPurchaseExistUser(callId);
+//            }
+//
+//        };
+//        return Reply.of(action, Predicates.isPurchaseJoinCallback());
+//    }
+//
+//
+//    public Reply handlePurchaseJoinOutUser() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String callId = callbackQuery.getId();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//            User user = callbackQuery.getFrom();
+//
+//            Purchase pr = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
+//
+//            if (currentMembers.getInvolvedCount() == 1) {
+//                responseHandler.alertLastPurchaseMember(callId);
+//            } else {
+//                // TODO if user not contains  remove
+//            }
+//        };
+//        return Reply.of(action, Predicates.isPurchaseJoinOutCallback());
+//    }
+//
+//
+//    public Reply handleEditPurchase() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase purchase = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+//
+//            responseHandler.handleEditPurchase(inlineMsgId, purchase, prMembers);
+//        };
+//        return Reply.of(action, Predicates.isEditPurchaseCallback());
+//    }
+//
+//
+//    public Reply handleShowPurchaseMembers() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase purchase = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+//            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
+//        };
+//        return Reply.of(action, Predicates.isPurchaseMembersCallback());
+//    }
+//
+//    public Reply handleBackCallback() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase purchase = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+//
+//            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
+//        };
+//        return Reply.of(action, Predicates.isBackCallback());
+//    }
+//
+//
+//    public Reply handleRemoveMemberFromPurchase() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String callId = callbackQuery.getId();
+//            String query = upd.getCallbackQuery().getData();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase pr = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList currentMembers = botService.getPurchaseInvokeMember(pr);
+//
+//            if (currentMembers.getInvolvedCount() == 1) {
+//                responseHandler.alertLastPurchaseMember(callId);
+//            } else {
+//                botService.removeFromPurchase(query);
+//                responseHandler.showPurchaseMembers(inlineMsgId, pr, botService.getPurchaseInvokeMember(pr));
+//            }
+//        };
+//        return Reply.of(action, Predicates.isMemberRemoveFromPurchaseCallback());
+//    }
+//
+//    public Reply handleAddMemberToPurchase() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String query = upd.getCallbackQuery().getData();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            botService.addToPurchase(query);
+//
+//            Purchase purchase = botService.getPurchase( inlineMsgId );
+//            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+//
+//            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
+//        };
+//        return Reply.of(action, Predicates.isMemberAddToPurchaseCallback());
+//    }
+//
+//    public Reply handleRemovePurchase() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase purchase = botService.deactivePurchase(inlineMsgId);
+//            responseHandler.handleRemovePurchase(inlineMsgId, purchase);
+//        };
+//        return Reply.of(action, Predicates.isPurchaseRemoveCallback());
+//    }
+//
+//    public Reply handleRestorePurchase() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Purchase purchase = botService.activePurchase(inlineMsgId);
+//            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
+//
+//            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
+//        };
+//        return Reply.of(action, Predicates.isPurchaseRestoreCallback());
+//    }
+//
+//    public Reply handleRemittanceSetExecutor() {
+//        Consumer<Update> action = upd -> {
+//            System.out.println(" -- handleRemittanceSetExecutor -- ");
+//            System.out.println("upd = " + upd);
+//
+//
+//        };
+//        return Reply.of(action, Predicates.isRemittanceSetExecutorCallback());
+//    }
 
-            if (currentMembers.getInvolvedCount() == 1) {
-                responseHandler.alertLastPurchaseMember(callId);
-            } else {
-                botService.removeFromPurchase(query);
-                responseHandler.showPurchaseMembers(inlineMsgId, pr, botService.getPurchaseInvokeMember(pr));
-            }
-        };
-        return Reply.of(action, Predicates.isMemberRemoveFromPurchaseCallback());
-    }
 
-    public Reply handleAddMemberToPurchase() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String query = upd.getCallbackQuery().getData();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            botService.addToPurchase(query);
-
-            Purchase purchase = botService.getPurchase( inlineMsgId );
-            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
-
-            responseHandler.showPurchaseMembers(inlineMsgId, purchase, prMembers);
-        };
-        return Reply.of(action, Predicates.isMemberAddToPurchaseCallback());
-    }
-
-    public Reply handleRemovePurchase() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Purchase purchase = botService.deactivePurchase(inlineMsgId);
-            responseHandler.handleRemovePurchase(inlineMsgId, purchase);
-        };
-        return Reply.of(action, Predicates.isPurchaseRemoveCallback());
-    }
-
-    public Reply handleRestorePurchase() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Purchase purchase = botService.activePurchase(inlineMsgId);
-            PurchaseMemberList prMembers = botService.getPurchaseInvokeMember(purchase);
-
-            responseHandler.showPurchase(inlineMsgId, purchase, prMembers);
-        };
-        return Reply.of(action, Predicates.isPurchaseRestoreCallback());
-    }
 
 }

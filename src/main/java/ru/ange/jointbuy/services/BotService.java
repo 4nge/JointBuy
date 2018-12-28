@@ -2,14 +2,12 @@ package ru.ange.jointbuy.services;
 
 
 import com.vdurmont.emoji.EmojiParser;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import ru.ange.jointbuy.exception.MemberAlreadyExistException;
-import ru.ange.jointbuy.pojo.Member;
-import ru.ange.jointbuy.pojo.Purchase;
-import ru.ange.jointbuy.pojo.PurchaseMember;
-import ru.ange.jointbuy.pojo.PurchaseMemberList;
+import ru.ange.jointbuy.pojo.*;
 import ru.ange.jointbuy.utils.Constants;
 import ru.ange.jointbuy.utils.StringFormater;
 
@@ -136,7 +134,7 @@ public class BotService {
     }
 
 
-    public void handleInlineAnswerMsg(long chatId, String text, User user) {
+    public Purchase handleInlineAnswerPurchaseMsg(long chatId, String text, User user) {
         String format = StringFormater.removeMarkdownSyntax(
                 EmojiParser.parseToUnicode( Constants.INLINE_BUY_MSG_TEXT_PTT )
         );
@@ -152,27 +150,43 @@ public class BotService {
             if (existPurchase != null) {
                 existPurchase.setTelegramChatId( chatId );
                 existPurchase.setMembers( members );
-                dbService.updatePurchase( existPurchase );
+                return dbService.updatePurchase( existPurchase );
             } else {
                 Purchase newPurchase = new Purchase(chatId, purchaser, name, amount, new Date(), members);
-                dbService.addPurchase( newPurchase );
+                return dbService.addPurchase( newPurchase );
             }
         }
+        return null;
     }
 
-    public void handleInlineAnswer(String inlineMsgId, String query, User user) {
-        String digit = query.substring( 0, query.indexOf( " " ) );
+    public Remittance addRemittance(long chatId, Message msg) {
+
+        Member sender = dbService.getMembersByTelegramId( msg.getFrom().getId() );
+        Remittance rem = new Remittance()
+                .setTelegramChatId( chatId )
+                .setDate( new Date() )
+                .setActive( false )
+                .setSender( sender );
+
+        return dbService.addRemittance( rem );
+    }
+
+
+
+    public void handleInlineAnswerPurchase( String inlineMsgId, String query, User user) {
+        int idx =  query.indexOf( " " ) > 0 ? query.indexOf( " " ) : query.length();
+        String digit = query.substring( 0, idx );
         String name = query.substring( query.indexOf( " " ) + 1, query.length() );
         double summ = Double.valueOf( digit.replace( ",", "." ) );
 
         Member purchaser = dbService.getMembersByTelegramId( user.getId() );
-        Purchase existPurchase = dbService.getPurchase(name, summ, purchaser);
+        Purchase existPurchase = dbService.getPurchase( name, summ, purchaser );
 
         if (existPurchase != null) {
             existPurchase.setInlineMsgId( inlineMsgId );
             dbService.updatePurchase( existPurchase );
         } else {
-            Purchase newPurchase = new Purchase(inlineMsgId, purchaser, name, summ, new Date());
+            Purchase newPurchase = new Purchase( inlineMsgId, purchaser, name, summ, new Date() );
             dbService.addPurchase( newPurchase );
         }
     }

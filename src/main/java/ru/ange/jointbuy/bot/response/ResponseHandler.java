@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResult;
@@ -18,11 +19,15 @@ import ru.ange.jointbuy.bot.msg.HelloMsg;
 import ru.ange.jointbuy.pojo.*;
 import ru.ange.jointbuy.utils.Constants;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class ResponseHandler {
+
+    private static final SimpleDateFormat DF = new SimpleDateFormat( "yyyy_MM_dd_mm_HH_ss" );
 
     private final MessageSender sender;
 
@@ -57,6 +62,18 @@ public class ResponseHandler {
         alert(callId, Constants.ADD_USER_CALLBACK_ALERT);
     }
 
+    private InlineKeyboardMarkup getRemittanceInlineKeyboardMarkup() {
+
+        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+                createInlineKeyboardBtt( "️:mailbox_with_mail: Назначить получателя", Constants.BACK_BTT_CALLBACK )
+        );
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        markupInline.setKeyboard( keyboard );
+
+        return markupInline;
+    }
+
 
     private InlineKeyboardMarkup getPurchaseInlineKeyboardMarkup() {
 
@@ -88,7 +105,7 @@ public class ResponseHandler {
     }
 
     private String getPurchaseInlineMsgText(String name, double sum, String fName, String lName, String usersCount) {
-        String hashtag = name.replace( " ", "_" );
+        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
         String userName = fName + " " + lName;
         String msgText = String.format( Constants.INLINE_BUY_MSG_TEXT_PTT, hashtag, name, sum,
                 usersCount, userName);
@@ -96,57 +113,82 @@ public class ResponseHandler {
         return EmojiParser.parseToUnicode( msgText );
     }
 
-
-    private List<InlineQueryResult> getInlineResult(Operation op, User user) {
-        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
-        String name = op.getName();
-        double sum = op.getSum();
-        String msgText = getPurchaseInlineMsgText( name, sum, user.getFirstName(),
-                user.getLastName(), Constants.INLINE_BUY_MSG_TEXT_ALL );
-
-        InputTextMessageContent msgCont = new InputTextMessageContent()
-                .enableMarkdown( true )
-                .setMessageText( msgText );
-
-        InlineQueryResultArticle buy = new InlineQueryResultArticle()
-                .setInputMessageContent( msgCont )
-                .setId( String.valueOf( Operation.Type.PURCHASE ) )
-                .setDescription( String.format( Constants.INLINE_TEXT_PTT, sum, name ) )
-                .setTitle( Constants.BUY_IMG_BTT_TEXT )
-                .setThumbUrl( Constants.BUY_IMG_BTT_URL )
-                .setReplyMarkup( getPurchaseInlineKeyboardMarkup() );
-
-        results.add( buy );
-
-//        InlineQueryResultArticle transfer = new InlineQueryResultArticle()
-//                .setInputMessageContent(getTextMessageCont(Constants.INLINE_MSG_TYPE_TRANSFER, name, sum, user, mc))
-//                .setId(Integer.toString(2))
-//                .setDescription(String.format( Constants.INLINE_TEXT_PTT, sum, name ))
-//                .setTitle(Constants.REMITTANCE_IMG_BTT_TEXT)
-//                .setThumbUrl(Constants.REMITTANCE_IMG_BTT_URL);
-//        results.add(transfer);
-
-        return results;
+    private String getRemittanceInlineMsgText(String name, double sum, String fName, String lName) {
+        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
+        String userName = fName + " " + lName;
+        String msgText = String.format( Constants.REMITTANCE_INLINE_MSG_TEXT_PTT, hashtag, sum, userName);
+        return EmojiParser.parseToUnicode( msgText );
     }
 
-    private Operation readOperation(String query) {
-        String digit = query.substring( 0, query.indexOf( " " ) );
-        Operation operation = new Operation()
-                .setName( query.substring( query.indexOf( " " ) + 1, query.length() ) )
-                .setSum( Double.valueOf( digit.replace( ",", "." ) ) );
-        return operation;
+
+    private List<InlineQueryResult> getInlineResult(Operation op, User user) {
+
+        String name = op.getName();
+        double sum = op.getSum();
+
+        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
+
+        if (sum > 0) {
+            String remMsgText = getRemittanceInlineMsgText( name, sum, user.getFirstName(), user.getLastName());
+
+            InputTextMessageContent remitMsgCont = new InputTextMessageContent()
+                //.enableMarkdown( true ) // not work with _
+                .setMessageText( remMsgText );
+
+            String desc = (name != null) ? String.format( Constants.INLINE_REMIT_DESC_TEXT_PTT, sum, name)
+                    : String.format( Constants.INLINE_REMIT_TEXT_PTT, sum);
+
+            InlineQueryResultArticle remittance = new InlineQueryResultArticle()
+                    .setInputMessageContent(remitMsgCont)
+                    .setId( String.valueOf( Operation.Type.REMITTANCE ) )
+                    .setDescription( desc )
+                    .setTitle( Constants.REMITTANCE_IMG_BTT_TEXT )
+                    .setThumbUrl( Constants.REMITTANCE_IMG_BTT_URL );
+
+            results.add(remittance);
+        }
+
+        if (sum > 0 && name != null && !name.isEmpty()) {
+            String msgText = getPurchaseInlineMsgText( name, sum, user.getFirstName(),
+                user.getLastName(), Constants.INLINE_BUY_MSG_TEXT_ALL );
+
+            InputTextMessageContent purchMsgCont = new InputTextMessageContent()
+                    .enableMarkdown( true )
+                    .setMessageText( msgText );
+
+            InlineQueryResultArticle buy = new InlineQueryResultArticle()
+                    .setInputMessageContent( purchMsgCont )
+                    .setId( String.valueOf( Operation.Type.PURCHASE ) )
+                    .setDescription( String.format( Constants.INLINE_PURCH_TEXT_PTT, sum, name) ) // TODO add " " in names
+                    .setTitle( Constants.BUY_IMG_BTT_TEXT )
+                    .setThumbUrl( Constants.BUY_IMG_BTT_URL )
+                    .setReplyMarkup( getPurchaseInlineKeyboardMarkup() );
+
+            results.add( buy );
+        }
+
+        return results;
     }
 
 
     public void answerInlineQuery(String query, String id, User user) {
         try {
+            String str = query.trim();
+            int idx = str.indexOf(" ") > 0 ? str.indexOf(" ") : str.length();
+            String digit = query.substring( 0, idx ).replace( ",", "." );
+            double sum = Double.valueOf( digit );
+            String name = str.indexOf(" ") > 0 ? str.substring( str.indexOf(" ")+1, query.length() ) : null;
+
+            Operation operation = new Operation()
+                    .setName( name )
+                    .setSum( sum );
+
             AnswerInlineQuery aiq = new AnswerInlineQuery()
                     .setInlineQueryId( id )
-                    .setResults( getInlineResult( readOperation( query ), user ) );
+                    .setResults( getInlineResult( operation, user ) );
 
             sender.execute( aiq );
-        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
-        }
+        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {}
     }
 
     public void editAnswerInlineQuery(long chatId, int msgId, String name, double sum, User user) {
@@ -278,6 +320,18 @@ public class ResponseHandler {
         result.add( createInlineKeyboardBtt( Constants.BACK_BTT_TEXT, Constants.PURCHASE_EDIT_BTT_CALLBACK ) );
         return result;
     }
+
+
+    private List<InlineKeyboardButton> createExecutorKeyboardButtons(List<Member> members) {
+        List<InlineKeyboardButton> result = new ArrayList<InlineKeyboardButton>();
+        for (Member member : members) {
+            String bttText = String.format( Constants.REMITTANCE_RECIPIENT_BTT_PTT, member.getFullName() );
+            String bttCallback = String.format( Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK, member.getId());
+            result.add( createInlineKeyboardBtt( bttText, bttCallback ) );
+        }
+        return result;
+    }
+
 
     private String getMembersCountText(int allCount, int invokeCount) {
         if (invokeCount == allCount) {
@@ -415,6 +469,104 @@ public class ResponseHandler {
 
             sender.execute( msg );
         } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void answerSplitCommand(long chatId, List<Member> members, List<Purchase> purchases) {
+        try {
+
+            String text = new String();
+            for (Member member : members) {
+                String debtorsStr = new String();
+                double spelt = 0;
+
+                for (Purchase purchase : purchases) {
+                    if (purchase.getPurchaser().equals( member ))
+                        spelt += purchase.getSum();
+                }
+
+                for (Member debtor : members) {
+                    double debt = 0.0;
+                    if (!member.equals( debtor )) {
+                        for (Purchase purchase : purchases) {
+                            if (purchase.getPurchaser().equals( member ) && purchase.getMembers().size() != 0)
+                                debt += purchase.getSum() / purchase.getMembers().size();
+                        }
+                        if (debt > 0)
+                            debtorsStr += String.format( Constants.SPLIT_DEBTOR_PTT, debtor.getFullName(), debt );
+                    }
+                }
+
+                if (spelt > 0) {
+                    String name = member.getFirstName();
+                    if (debtorsStr.isEmpty()) {
+                        String should = Constants.SPLIT_MEMBER_SHOULD_NONE;
+                        text += String.format( Constants.SPLIT_MEMBER_PTT, name, spelt, should );
+                    } else {
+                        String should = String.format( Constants.SPLIT_MEMBER_SHOULD, debtorsStr );
+                        text += String.format( Constants.SPLIT_MEMBER_PTT, name, spelt, should);
+                    }
+                }
+            }
+            String res = text.isEmpty() ? Constants.SPLIT_DEBTORS_NONE : text.replaceFirst("\n", "" );
+
+            SendMessage msg = new SendMessage()
+                    .setText( EmojiParser.parseToUnicode(res) )
+                    .enableMarkdown( true )
+                    .setChatId( chatId );
+
+            sender.execute( msg );
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void handleRemittanceMsg(long chatId, Message msg, User from, List<Member> members) {
+
+        members.remove(from);
+
+        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+                createExecutorKeyboardButtons(members)
+        );
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        markupInline.setKeyboard( keyboard );
+
+        try {
+            EditMessageText emt = new EditMessageText()
+                    .setChatId( chatId )
+                    .setMessageId( msg.getMessageId() )
+                    .enableMarkdown( true )
+                    .setText( msg.getText() )
+                    .setReplyMarkup( markupInline );
+
+            sender.execute( emt );
+        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void handleRemittanceMsg(Message msg, Remittance remittance, List<Member> members) {
+        try {
+            members.remove( remittance.getSender() );
+
+            List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+                    createExecutorKeyboardButtons(members)
+            );
+
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            markupInline.setKeyboard( keyboard );
+
+            EditMessageText emt = new EditMessageText()
+                    .setChatId( remittance.getTelegramChatId() )
+                    .setMessageId( msg.getMessageId() )
+                    .enableMarkdown( true )
+                    .setText( msg.getText() )
+                    .setReplyMarkup( markupInline );
+
+            sender.execute( emt );
+        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
             e.printStackTrace();
         }
     }

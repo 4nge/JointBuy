@@ -47,10 +47,17 @@
         <property name="npjdbc" ref="npjdbc" />
     </bean>
 
+    <bean id="remittanceDAO" class="ru.ange.jointbuy.dao.RemittanceDAO">
+        <property name="jdbc"   ref="jdbc" />
+        <property name="npjdbc" ref="npjdbc" />
+    </bean>
+
+
     <!-- Service -->
     <bean id="dbService" class="ru.ange.jointbuy.services.DbService">
-        <property name="memberDAO"          ref="memberDAO" />
-        <property name="purchaseDAO"        ref="purchaseDAO" />
+        <property name="memberDAO"      ref="memberDAO" />
+        <property name="purchaseDAO"    ref="purchaseDAO" />
+        <property name="remittanceDAO"  ref="remittanceDAO" />
     </bean>
 
     <bean id="botService" class="ru.ange.jointbuy.services.BotService">

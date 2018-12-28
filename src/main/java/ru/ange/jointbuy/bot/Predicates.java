@@ -14,6 +14,33 @@ import java.util.function.Predicate;
 
 public class Predicates {
 
+
+    // ------ inline actions ------
+
+    public static Predicate<Update> isInlineQuery() {
+        return upd -> upd.hasInlineQuery() && upd.getInlineQuery().hasQuery();
+    }
+
+
+    // ------ Remittance ------
+
+    public static Predicate<Update> isInlineRemittanceAnswer() {
+        return Flag.MESSAGE.and(upd ->
+                isMsgMatches(upd, Constants.REMITTANCE_INLINE_MSG_TEXT_PTT)
+        );
+    }
+
+    public static Predicate<Update> isRemittanceSetRecipientCallback() {
+        return Flag.CALLBACK_QUERY.and(upd ->
+                isCallbackMatches(upd, Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK)
+        );
+    }
+
+
+
+
+
+
     public static Predicate<Update> isHelloReply() {
         return Flag.CALLBACK_QUERY.and( upd ->
             isCallbackMatches( upd, HelloMsg.CALLBACK_DATA )
@@ -28,9 +55,9 @@ public class Predicates {
         return isAddNewMember().and( upd -> upd.getMessage().getNewChatMembers().contains(me));
     }
 
-    public static Predicate<Update> isInlineQuery() {
-        return upd -> upd.hasInlineQuery() && upd.getInlineQuery().hasQuery();
-    }
+
+
+
 
     public static Predicate<Update> isReplyToMessage(String message) {
         return upd -> {
@@ -43,11 +70,13 @@ public class Predicates {
         return upd -> upd.getMessage().getReplyToMessage().getFrom().getUserName().equalsIgnoreCase(botUserName);//
     }
 
-    public static Predicate<Update> isInlineAnswer() {
+    public static Predicate<Update> isInlinePutchaseAnswer() {
         return Flag.MESSAGE.and(upd ->
             isMsgMatches(upd, Constants.INLINE_BUY_MSG_TEXT_PTT)
         );
     }
+
+
 
     public static Predicate<Update> isPurchaseMembersCallback() {
         return Flag.CALLBACK_QUERY.and(upd ->
@@ -102,6 +131,10 @@ public class Predicates {
             isCallbackMatches(upd, Constants.ADD_TO_PURCHASE_CALLBACK_PTT)
         );
     }
+
+
+
+
 
     private static boolean isCallbackMatches(Update upd, String callback) {
         String query = upd.getCallbackQuery().getData();

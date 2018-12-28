@@ -3,7 +3,7 @@ package ru.ange.jointbuy.pojo;
 public class Operation {
 
     public enum Type {
-        PURCHASE, TRANSFER
+        PURCHASE, REMITTANCE
     }
 
     private Type type;
@@ -41,5 +41,14 @@ public class Operation {
     public Operation setName(String name) {
         this.name = name;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "type=" + type +
+                ", sum=" + sum +
+                ", name='" + name + '\'' +
+                '}';
     }
 }
