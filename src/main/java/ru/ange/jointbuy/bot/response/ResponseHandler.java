@@ -4,6 +4,7 @@ import com.vdurmont.emoji.EmojiParser;
 import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -35,33 +36,189 @@ public class ResponseHandler {
         this.sender = sender;
     }
 
-    private SendMessage getHelloSendMessage(long chatId, List<Member> members) {
-        HelloMsg helloMsg = new HelloMsg( members );
-        SendMessage msg = new SendMessage()
-                .setText( helloMsg.getText() )
-                .setReplyMarkup( helloMsg.getMarkup() )
-                .setChatId( chatId );
-        return msg;
-    }
 
     public void sendHelloMsg(long chatId, List<Member> members) {
-        try {
-            sender.execute( getHelloSendMessage( chatId, members ) );
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+
+        String usersText = new String();
+        for (int i = 0; i < members.size(); i++) {
+            Member user = members.get( i );
+            String fn = user.getFirstName() != null ? user.getFirstName() : "";
+            String ln = user.getFirstName() != null ? user.getLastName() : "";
+            usersText += String.format( Constants.START_CHAT_MSG_USER_PTT, fn, ln );
         }
+
+        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+                createInlineKeyboardBtt( Constants.JOIN_USER_BTT_TEXT, Constants.JOIN_USER_BTT_CALLBACK )
+        );
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
+                .setKeyboard( keyboard );
+
+        SendMessage msg = new SendMessage()
+                .setText( EmojiParser.parseToUnicode(String.format( Constants.START_CHAT_MSG_TEXT, usersText )) )
+                .setReplyMarkup( markupInline )
+                .setChatId( chatId );
+
+        this.send(msg);
     }
 
     public void alertUserAdded(String callId) {
-        alert(callId, Constants.ADD_USER_CALLBACK_ALERT);
+        alert(callId, Constants.JOIN_USER_BTT_ANSWER_SUCCESS);
     }
-
-
 
     public void alertUserAlreadyExist(String callId) {
-        alert(callId, Constants.ADD_USER_CALLBACK_ALERT);
+        alert(callId, Constants.JOIN_USER_BTT_ANSWER_EXISTS);
     }
 
+
+    public void answerInlineQuery(String query, String id, User user) {
+        try {
+            String str = query.trim();
+            int idx = str.indexOf(" ") > 0 ? str.indexOf(" ") : str.length();
+            String digit = query.substring( 0, idx ).replace( ",", "." );
+            double sum = Double.valueOf( digit );
+            String name = str.indexOf(" ") > 0 ? str.substring( str.indexOf(" ")+1, query.length() ) : null;
+
+            Operation operation = new Operation()
+                    .setName( name )
+                    .setSum( sum );
+
+            AnswerInlineQuery aiq = new AnswerInlineQuery()
+                    .setInlineQueryId( id )
+                    .setResults( getInlineResult( operation, user ) );
+
+            sender.execute( aiq );
+        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
+            // do nothing
+        }
+    }
+
+//    private String getPurchaseInlineMsgText(String name, double sum, String fName, String lName, String usersCount) {
+//        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
+//        String userName = fName + " " + lName;
+//        String msgText = String.format( Constants.INLINE_BUY_MSG_TEXT_PTT, hashtag, name, sum, usersCount, userName);
+//        return EmojiParser.parseToUnicode( msgText );
+//    }
+
+    private String getRemittanceInlineMsgText(String name, double sum, String fName, String lName) {
+        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
+        String userName = fName + " " + lName;
+        String msgText = String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName);
+        return EmojiParser.parseToUnicode( msgText );
+    }
+
+    private List<InlineQueryResult> getInlineResult(Operation op, User user) {
+        String name = op.getName();
+        double sum = op.getSum();
+        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
+
+        if (sum > 0) {
+            String remMsgText = getRemittanceInlineMsgText( name, sum, user.getFirstName(), user.getLastName());
+
+            InputTextMessageContent remitMsgCont = new InputTextMessageContent()
+                    //.enableMarkdown( true ) // not work with _
+                    .setMessageText( remMsgText );
+
+            String desc = (name != null) ? String.format( Constants.INLINE_REMIT_DESC_TEXT_PTT, sum, name)
+                    : String.format( Constants.INLINE_REMIT_TEXT_PTT, sum);
+
+            InlineQueryResultArticle remittance = new InlineQueryResultArticle()
+                    .setInputMessageContent(remitMsgCont)
+                    .setId( String.valueOf( Operation.Type.REMITTANCE ) )
+                    .setDescription( desc )
+                    .setTitle( Constants.REMITTANCE_INLINE_BTT_TEXT )
+                    .setThumbUrl( Constants.REMITTANCE_INLINE_BTT_IMG_URL );
+
+            results.add(remittance);
+        }
+
+//        if (sum > 0 && name != null && !name.isEmpty()) {
+//            String msgText = getPurchaseInlineMsgText( name, sum, user.getFirstName(),
+//                    user.getLastName(), Constants.INLINE_BUY_MSG_TEXT_ALL );
+//
+//            InputTextMessageContent purchMsgCont = new InputTextMessageContent()
+//                    .enableMarkdown( true )
+//                    .setMessageText( msgText );
+//
+//            InlineQueryResultArticle buy = new InlineQueryResultArticle()
+//                    .setInputMessageContent( purchMsgCont )
+//                    .setId( String.valueOf( Operation.Type.PURCHASE ) )
+//                    .setDescription( String.format( Constants.INLINE_PURCH_TEXT_PTT, sum, name) ) // TODO add " " in names
+//                    .setTitle( Constants.BUY_IMG_BTT_TEXT )
+//                    .setThumbUrl( Constants.BUY_IMG_BTT_URL )
+//                    .setReplyMarkup( getPurchaseInlineKeyboardMarkup() );
+//
+//            results.add( buy );
+//        }
+        return results;
+    }
+
+//    private InlineKeyboardMarkup getPurchaseInlineKeyboardMarkup() {
+//        List<InlineKeyboardButton> joinLine = new ArrayList<>();
+//        joinLine.add(createInlineKeyboardBtt(
+//                Constants.PURCHASE_JOIN_BTT_TEXT,
+//                Constants.PURCHASE_JOIN_CALLBACK )
+//        );
+//        joinLine.add(createInlineKeyboardBtt(
+//                Constants.PURCHASE_JOIN_OUT_BTT_TEXT,
+//                Constants.PURCHASE_JOIN_OUT_CALLBACK )
+//        );
+//
+//        List<InlineKeyboardButton> editLine = new ArrayList<>();
+//        editLine.add(createInlineKeyboardBtt( Constants.PURCHASE_EDIT_BTT_TEXT, Constants.PURCHASE_EDIT_BTT_CALLBACK ));
+//
+//        List<InlineKeyboardButton> delLine = new ArrayList<>();
+//        delLine.add(createInlineKeyboardBtt( Constants.DELETE_PURCHASE_BTT_TEXT, Constants.DELETE_PURCHASE_CALLBACK ));
+//
+//        List<List<InlineKeyboardButton>> lines = new ArrayList<>();
+//        lines.add( joinLine );
+//        lines.add( editLine );
+//        lines.add( delLine );
+//
+//        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
+//                .setKeyboard( lines );
+//
+//        return markupInline;
+//    }
+
+
+    public void handleRemittanceMsg(Message msg, Remittance remittance, List<Member> members) {
+        members.remove( remittance.getSender() );
+        List<InlineKeyboardButton> btts = new ArrayList<InlineKeyboardButton>();
+
+        for (Member member : members) {
+            int remID = remittance.getID();
+            int memID = member.getId();
+            String memName = member.getFullName();
+            String bttText = String.format( Constants.REMITTANCE_RECIPIENT_BTT_PTT, memName );
+            String bttCallback = String.format( Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK, remID, memID );
+            btts.add( createInlineKeyboardBtt( bttText, bttCallback ) );
+        }
+
+        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard( btts );
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
+                .setKeyboard( keyboard );
+
+        EditMessageText emt = new EditMessageText()
+                .setChatId( remittance.getTelegramChatId() )
+                .setMessageId( msg.getMessageId() )
+                .enableMarkdown( true )
+                .setText( msg.getText() )
+                .setReplyMarkup( markupInline );
+
+        this.send( emt );
+    }
+
+
+
+
+
+
+
+
+
+
+    /*
     private InlineKeyboardMarkup getRemittanceInlineKeyboardMarkup() {
 
         List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
@@ -72,102 +229,6 @@ public class ResponseHandler {
         markupInline.setKeyboard( keyboard );
 
         return markupInline;
-    }
-
-
-    private InlineKeyboardMarkup getPurchaseInlineKeyboardMarkup() {
-
-        List<InlineKeyboardButton> joinLine = new ArrayList<>();
-        joinLine.add(createInlineKeyboardBtt(
-                Constants.PURCHASE_JOIN_BTT_TEXT,
-                Constants.PURCHASE_JOIN_CALLBACK )
-        );
-        joinLine.add(createInlineKeyboardBtt(
-                Constants.PURCHASE_JOIN_OUT_BTT_TEXT,
-                Constants.PURCHASE_JOIN_OUT_CALLBACK )
-        );
-
-        List<InlineKeyboardButton> editLine = new ArrayList<>();
-        editLine.add(createInlineKeyboardBtt( Constants.PURCHASE_EDIT_BTT_TEXT, Constants.PURCHASE_EDIT_BTT_CALLBACK ));
-
-        List<InlineKeyboardButton> delLine = new ArrayList<>();
-        delLine.add(createInlineKeyboardBtt( Constants.DELETE_PURCHASE_BTT_TEXT, Constants.DELETE_PURCHASE_CALLBACK ));
-
-        List<List<InlineKeyboardButton>> lines = new ArrayList<>();
-        lines.add( joinLine );
-        lines.add( editLine );
-        lines.add( delLine );
-
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        markupInline.setKeyboard( lines );
-
-        return markupInline;
-    }
-
-    private String getPurchaseInlineMsgText(String name, double sum, String fName, String lName, String usersCount) {
-        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
-        String userName = fName + " " + lName;
-        String msgText = String.format( Constants.INLINE_BUY_MSG_TEXT_PTT, hashtag, name, sum,
-                usersCount, userName);
-
-        return EmojiParser.parseToUnicode( msgText );
-    }
-
-    private String getRemittanceInlineMsgText(String name, double sum, String fName, String lName) {
-        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
-        String userName = fName + " " + lName;
-        String msgText = String.format( Constants.REMITTANCE_INLINE_MSG_TEXT_PTT, hashtag, sum, userName);
-        return EmojiParser.parseToUnicode( msgText );
-    }
-
-
-    private List<InlineQueryResult> getInlineResult(Operation op, User user) {
-
-        String name = op.getName();
-        double sum = op.getSum();
-
-        List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
-
-        if (sum > 0) {
-            String remMsgText = getRemittanceInlineMsgText( name, sum, user.getFirstName(), user.getLastName());
-
-            InputTextMessageContent remitMsgCont = new InputTextMessageContent()
-                //.enableMarkdown( true ) // not work with _
-                .setMessageText( remMsgText );
-
-            String desc = (name != null) ? String.format( Constants.INLINE_REMIT_DESC_TEXT_PTT, sum, name)
-                    : String.format( Constants.INLINE_REMIT_TEXT_PTT, sum);
-
-            InlineQueryResultArticle remittance = new InlineQueryResultArticle()
-                    .setInputMessageContent(remitMsgCont)
-                    .setId( String.valueOf( Operation.Type.REMITTANCE ) )
-                    .setDescription( desc )
-                    .setTitle( Constants.REMITTANCE_IMG_BTT_TEXT )
-                    .setThumbUrl( Constants.REMITTANCE_IMG_BTT_URL );
-
-            results.add(remittance);
-        }
-
-        if (sum > 0 && name != null && !name.isEmpty()) {
-            String msgText = getPurchaseInlineMsgText( name, sum, user.getFirstName(),
-                user.getLastName(), Constants.INLINE_BUY_MSG_TEXT_ALL );
-
-            InputTextMessageContent purchMsgCont = new InputTextMessageContent()
-                    .enableMarkdown( true )
-                    .setMessageText( msgText );
-
-            InlineQueryResultArticle buy = new InlineQueryResultArticle()
-                    .setInputMessageContent( purchMsgCont )
-                    .setId( String.valueOf( Operation.Type.PURCHASE ) )
-                    .setDescription( String.format( Constants.INLINE_PURCH_TEXT_PTT, sum, name) ) // TODO add " " in names
-                    .setTitle( Constants.BUY_IMG_BTT_TEXT )
-                    .setThumbUrl( Constants.BUY_IMG_BTT_URL )
-                    .setReplyMarkup( getPurchaseInlineKeyboardMarkup() );
-
-            results.add( buy );
-        }
-
-        return results;
     }
 
 
@@ -522,52 +583,50 @@ public class ResponseHandler {
         }
     }
 
-    public void handleRemittanceMsg(long chatId, Message msg, User from, List<Member> members) {
 
-        members.remove(from);
 
-        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
-                createExecutorKeyboardButtons(members)
-        );
 
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        markupInline.setKeyboard( keyboard );
+    */
 
+    public void alert(String callId, String msg) {
         try {
-            EditMessageText emt = new EditMessageText()
-                    .setChatId( chatId )
-                    .setMessageId( msg.getMessageId() )
-                    .enableMarkdown( true )
-                    .setText( msg.getText() )
-                    .setReplyMarkup( markupInline );
+            AnswerCallbackQuery acq = new AnswerCallbackQuery()
+                    .setCallbackQueryId( callId )
+                    .setText( msg );
 
-            sender.execute( emt );
-        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
+            sender.execute(acq);
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
 
-    public void handleRemittanceMsg(Message msg, Remittance remittance, List<Member> members) {
+    private void send(BotApiMethod msg) {
         try {
-            members.remove( remittance.getSender() );
-
-            List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
-                    createExecutorKeyboardButtons(members)
-            );
-
-            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            markupInline.setKeyboard( keyboard );
-
-            EditMessageText emt = new EditMessageText()
-                    .setChatId( remittance.getTelegramChatId() )
-                    .setMessageId( msg.getMessageId() )
-                    .enableMarkdown( true )
-                    .setText( msg.getText() )
-                    .setReplyMarkup( markupInline );
-
-            sender.execute( emt );
-        } catch (StringIndexOutOfBoundsException | NumberFormatException | TelegramApiException e) {
+            sender.execute( msg );
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
+
+
+    private List<List<InlineKeyboardButton>> createInlineRowsKeyboard(InlineKeyboardButton... buttons) {
+        return createInlineRowsKeyboard( Arrays.asList( buttons ) );
+    }
+
+    private List<List<InlineKeyboardButton>> createInlineRowsKeyboard(List<InlineKeyboardButton> buttons) {
+        List<List<InlineKeyboardButton>> result = new ArrayList<>();
+        for (InlineKeyboardButton btt : buttons) {
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            rowInline.add( btt );
+            result.add( rowInline );
+        }
+        return result;
+    }
+
+    private InlineKeyboardButton createInlineKeyboardBtt(String text, String callback) {
+        return new InlineKeyboardButton()
+                .setText( EmojiParser.parseToUnicode( text ) )
+                .setCallbackData( callback );
+    }
+
 }

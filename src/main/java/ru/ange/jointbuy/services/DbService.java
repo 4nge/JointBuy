@@ -101,4 +101,8 @@ public class DbService {
     public Remittance addRemittance(Remittance rem) {
         return remittanceDAO.addRemittance( rem );
     }
+
+    public Remittance getRemittance(int remittanceId) {
+        remittanceDAO.ge
+    }
 }

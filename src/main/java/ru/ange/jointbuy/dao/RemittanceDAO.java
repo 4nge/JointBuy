@@ -55,4 +55,28 @@ public class RemittanceDAO {
 
         return rem;
     }
+
+    private static final String GET_REMITTANCE = "" +
+            "select " +
+            "    r.ID, " +
+            "    r.telChatID, " +
+            "    r.telInlineMsgID, " +
+            "    r.name, " +
+            "    r.senderID, " +
+            "    r.recipientID, " +
+            "    r.remittanceDate, " +
+            "    r.active " +
+            "from " +
+            "  jointbuy.Remittances as r " +
+            "where " +
+            "  r.ID - :remId";
+
+
+    public Remittance getRemittance(int remId) {
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("remId", remId );
+
+        return npjdbc.query( GET_REMITTANCE, params  );
+    }
 }

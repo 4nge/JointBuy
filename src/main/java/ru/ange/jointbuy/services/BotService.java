@@ -256,4 +256,17 @@ public class BotService {
         }
     }
 
+    public Remittance updateRemittance(String data, String inlineMessageId) {
+        Pattern p = Pattern.compile( "\\d+" );
+        Matcher m = p.matcher( data );
+        int remittanceId = m.find() ? Integer.parseInt( m.group() ) : 0;
+        int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
+
+        Remittance remittance = dbService.getRemittance( remittanceId );
+
+
+        //Member recipient = dbService.getMember( memberId );
+        //
+        return null;
+    }
 }
