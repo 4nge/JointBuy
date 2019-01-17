@@ -103,6 +103,6 @@ public class DbService {
     }
 
     public Remittance getRemittance(int remittanceId) {
-        remittanceDAO.ge
+        return remittanceDAO.getRemittance( remittanceId );
     }
 }

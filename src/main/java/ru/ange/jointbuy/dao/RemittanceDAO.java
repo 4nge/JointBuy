@@ -1,9 +1,11 @@
 package ru.ange.jointbuy.dao;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+import ru.ange.jointbuy.dao.mappers.RemittanceMapper;
 import ru.ange.jointbuy.pojo.Remittance;
 
 public class RemittanceDAO {
@@ -24,6 +26,8 @@ public class RemittanceDAO {
     public void setJdbc(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
+
+    private static final RowMapper<Remittance> R_MP = new RemittanceMapper();
 
     private static final String ADD_REMITTANCE = "" +
             "insert into jointbuy.Remittances values ( " +
@@ -58,18 +62,30 @@ public class RemittanceDAO {
 
     private static final String GET_REMITTANCE = "" +
             "select " +
-            "    r.ID, " +
-            "    r.telChatID, " +
-            "    r.telInlineMsgID, " +
-            "    r.name, " +
-            "    r.senderID, " +
-            "    r.recipientID, " +
-            "    r.remittanceDate, " +
-            "    r.active " +
+            "  r.ID, " +
+            "  r.telChatID, " +
+            "  r.telInlineMsgID, " +
+            "  r.name, " +
+            "  r.senderID, " +
+            "  r.active," +
+            "  se.ID as se_ID," +
+            "  se.telUserID as se_telUserId," +
+            "  se.telChatID as se_telChatId," +
+            "  se.firstName as se_firstName," +
+            "  se.lastName as se_lastName," +
+            "  se.alias as se_alias," +
+            "  re.ID as re_ID," +
+            "  re.telUserID as re_telUserId," +
+            "  re.telChatID as re_telChatId," +
+            "  re.firstName as re_firstName," +
+            "  re.lastName as re_lastName," +
+            "  re.alias as re_alias" +
             "from " +
             "  jointbuy.Remittances as r " +
+            "  left outer join jointbuy.Members se on se.ID = r.senderID" +
+            "  left outer join jointbuy.Members re on re.ID = r.recipientID " +
             "where " +
-            "  r.ID - :remId";
+            "  r.id = :remId ";
 
 
     public Remittance getRemittance(int remId) {
@@ -77,6 +93,6 @@ public class RemittanceDAO {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("remId", remId );
 
-        return npjdbc.query( GET_REMITTANCE, params  );
+        return npjdbc.queryForObject( GET_REMITTANCE, params, R_MP );
     }
 }
