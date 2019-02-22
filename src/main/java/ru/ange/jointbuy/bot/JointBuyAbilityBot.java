@@ -47,6 +47,10 @@ public class JointBuyAbilityBot extends AbilityBot {
     }
 
 
+    // --------------------------------
+    // ------ Start chat actions ------
+    // --------------------------------
+
     public Reply sayHello() {
         Consumer<Update> action = upd -> {
             long chatId = getChatId( upd );
@@ -66,6 +70,7 @@ public class JointBuyAbilityBot extends AbilityBot {
             String callId = upd.getCallbackQuery().getId();
             try {
                 botService.handleAddUserBtt( upd, getChatId( upd ) );
+                responseHandler.alertUserAdded( callId );
             } catch (MemberAlreadyExistException e) {
                 responseHandler.alertUserAlreadyExist( callId );
             }
@@ -73,57 +78,62 @@ public class JointBuyAbilityBot extends AbilityBot {
         return Reply.of(action, isHelloReply());
     }
 
+
+    // ----------------------
     // ------ Commands ------
+    // ----------------------
 
-    public Ability addUsersCommand() {
-        AddUserMsg addUserMsg = new AddUserMsg();
-        return Ability.builder()
-                .name( Constants.ADD_USER_COMMAND_NAME )
-                .info( Constants.ADD_USER_COMMAND_DESCRIPTION )
-                .locality(ALL)
-                .privacy(PUBLIC)
-                .action(ctx -> {
-                    silent.forceReply( addUserMsg.getText(), ctx.chatId() );
-                })
-                .reply(upd -> {
-                    botService.handleAddUserCommand(upd, getChatId( upd ));
-                }, Flag.MESSAGE, Flag.REPLY, Predicates.isReplyToBot(getBotUsername()),
-                        Predicates.isReplyToMessage(addUserMsg.getText()))
-                .build();
-    }
+//    public Ability addUsersCommand() {
+//        AddUserMsg addUserMsg = new AddUserMsg();
+//        return Ability.builder()
+//                .name( Constants.ADD_USER_COMMAND_NAME )
+//                .info( Constants.ADD_USER_COMMAND_DESCRIPTION )
+//                .locality(ALL)
+//                .privacy(PUBLIC)
+//                .action(ctx -> {
+//                    silent.forceReply( addUserMsg.getText(), ctx.chatId() );
+//                })
+//                .reply(upd -> {
+//                    botService.handleAddUserCommand(upd, getChatId( upd ));
+//                }, Flag.MESSAGE, Flag.REPLY, Predicates.isReplyToBot(getBotUsername()),
+//                        Predicates.isReplyToMessage(addUserMsg.getText()))
+//                .build();
+//    }
+//
+//    public Ability listOperationCommand() {
+//        return Ability.builder()
+//                .name( Constants.LIST_PURCHASES_COMMAND_NAME )
+//                .info( Constants.LIST_PURCHASES_COMMAND_DESCRIPTION )
+//                .locality(ALL)
+//                .privacy(PUBLIC)
+//                .action(ctx -> {
+//                    long chatId = ctx.chatId();
+//                    List<Purchase> purchases = botService.getActivePurchases(chatId);
+//                    responseHandler.answerListCommand(chatId, purchases);
+//                })
+//                .build();
+//    }
+//
+//
+//    public Ability spitPurchasesCommand() {
+//        return Ability.builder()
+//                .name( Constants.SPLIT_PURCHASES_COMMAND_NAME )
+//                .info( Constants.SPLIT_PURCHASES_COMMAND_DESCRIPTION )
+//                .locality(ALL)
+//                .privacy(PUBLIC)
+//                .action(ctx -> {
+//                    long chatId = ctx.chatId();
+//                    List<Purchase> purchases = botService.getActivePurchases(chatId);
+//                    List<Member> members = botService.getMembers( chatId );
+//                    responseHandler.answerSplitCommand(chatId, members, purchases);
+//                })
+//                .build();
+//    }
 
-    public Ability listOperationCommand() {
-        return Ability.builder()
-                .name( Constants.LIST_PURCHASES_COMMAND_NAME )
-                .info( Constants.LIST_PURCHASES_COMMAND_DESCRIPTION )
-                .locality(ALL)
-                .privacy(PUBLIC)
-                .action(ctx -> {
-                    long chatId = ctx.chatId();
-                    List<Purchase> purchases = botService.getActivePurchases(chatId);
-                    responseHandler.answerListCommand(chatId, purchases);
-                })
-                .build();
-    }
 
-
-    public Ability spitPurchasesCommand() {
-        return Ability.builder()
-                .name( Constants.SPLIT_PURCHASES_COMMAND_NAME )
-                .info( Constants.SPLIT_PURCHASES_COMMAND_DESCRIPTION )
-                .locality(ALL)
-                .privacy(PUBLIC)
-                .action(ctx -> {
-                    long chatId = ctx.chatId();
-                    List<Purchase> purchases = botService.getActivePurchases(chatId);
-                    List<Member> members = botService.getMembers( chatId );
-                    responseHandler.answerSplitCommand(chatId, members, purchases);
-                })
-                .build();
-    }
-
-
-    // ------ inline actions ------
+    // ----------------------------
+    // ------ Inline actions ------
+    // ----------------------------
 
     public Reply handleInlineQuery() {
         Consumer<Update> action = upd -> {
@@ -135,7 +145,9 @@ public class JointBuyAbilityBot extends AbilityBot {
     }
 
 
+    // ------------------------
     // ------ Remittance ------
+    // ------------------------
 
     public Reply handleRemittanceInlineAnswerMsg() {
         Consumer<Update> action = upd -> {
@@ -144,18 +156,31 @@ public class JointBuyAbilityBot extends AbilityBot {
 
             Remittance remittance = botService.addRemittance( chatId, msg );
             List<Member> members = botService.getMembers( chatId );
-            responseHandler.handleRemittanceMsg(msg, remittance, members);
+            responseHandler.handleRemittanceMsg( msg, remittance, members );
         };
         return Reply.of(action, Predicates.isInlineRemittanceAnswer());
     }
 
     public Reply handleRemittanceSetRecipient() {
         Consumer<Update> action = upd -> {
-            long chatId = getChatId( upd );
+            CallbackQuery cbQuery = upd.getCallbackQuery();
+            String data = cbQuery.getData();
+            String inlineMessageId = cbQuery.getInlineMessageId();
+            User user = cbQuery.getFrom(); // TODO if sender != user alert error
+            Remittance remittance = botService.updateRemittance(data, inlineMessageId);
 
-            System.out.println("upd = " + upd);
+            System.out.println("user = " + user);
+            System.out.println("remittance = " + remittance);
 
 
+
+            //String data = upd.getCallbackQuery().getData();
+            //int remId =
+            //Remittance remittance = botService.getRemittance();
+
+
+
+            // TODO get recipient and rem id from update, update remittance in bd, change msg.
         };
         return Reply.of(action, Predicates.isRemittanceSetRecipientCallback());
     }

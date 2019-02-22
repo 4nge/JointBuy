@@ -26,7 +26,7 @@ public class Predicates {
 
     public static Predicate<Update> isInlineRemittanceAnswer() {
         return Flag.MESSAGE.and(upd ->
-                isMsgMatches(upd, Constants.REMITTANCE_INLINE_MSG_TEXT_PTT)
+                isMsgMatches(upd, Constants.REMITTANCE_MSG_TEXT_PTT)
         );
     }
 

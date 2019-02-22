@@ -9,7 +9,7 @@
         <property name="driverClassName"        value="com.mysql.jdbc.Driver" />
         <property name="url"                    value="jdbc:mysql://localhost:3306/jointbuy" />
         <property name="username"               value="joint_buy_bot" />
-        <property name="password"               value="created-to-make-life-easier" />
+        <property name="password"               value="CreatED-12-easier!" />
         <property name="connectionProperties">
             <props>
                 <prop key="useUnicode">yes</prop>

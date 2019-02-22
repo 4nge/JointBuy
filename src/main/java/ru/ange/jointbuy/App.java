@@ -2,6 +2,7 @@ package ru.ange.jointbuy;
 
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.ApiContextInitializer;
 
 import org.telegram.telegrambots.bots.DefaultBotOptions;
@@ -19,11 +20,10 @@ import java.net.PasswordAuthentication;
 
 public class App {
 
-    private static String PROXY_HOST = "80.211.202.65";
-    private static Integer PROXY_PORT = 12080;
-    private static String PROXY_USER = "telegram";
-    private static String PROXY_PASSWORD = "telegram";
-
+    private static String PROXY_HOST = "81.2.248.110";
+    private static Integer PROXY_PORT = 11080;
+    private static String PROXY_USER = "soksuser";
+    private static String PROXY_PASSWORD = "FV1Pg1q-N_Ev";
 
     public static void main( String[] args ) {
 
@@ -42,16 +42,19 @@ public class App {
 
             ApiContextInitializer.init();
 
-            // Create the TelegramBotsApi object to register your bots
-            TelegramBotsApi botsApi = new TelegramBotsApi();
-
             // Set up Http proxy
             DefaultBotOptions botOptions = ApiContext.getInstance(DefaultBotOptions.class);
             botOptions.setProxyType(DefaultBotOptions.ProxyType.SOCKS5);
             botOptions.setProxyHost(PROXY_HOST);
             botOptions.setProxyPort(PROXY_PORT);
 
-            botsApi.registerBot(new JointBuyAbilityBot(botOptions, botService));
+            // Create bot instance
+            JointBuyAbilityBot jointBuyBot = new JointBuyAbilityBot(botOptions, botService);
+
+            // Create the TelegramBotsApi object to register bot
+            TelegramBotsApi botsApi = new TelegramBotsApi();
+            botsApi.registerBot(jointBuyBot);
+
 
         } catch (TelegramApiRequestException e) {
             e.printStackTrace();

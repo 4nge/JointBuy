@@ -16,7 +16,7 @@ public class PurchaseMapper implements RowMapper<Purchase> {
     @Override
     public Purchase mapRow(ResultSet rs, int i) throws SQLException {
 
-        int ID = rs.getInt("pr_ID" );
+        int id = rs.getInt("pr_ID" );
         long telChatId = rs.getLong("pr_telChatId" );
         String inlineMsgId = rs.getString("pr_telInlineMsgID" );
         String name = rs.getString("pr_name" );
@@ -25,7 +25,7 @@ public class PurchaseMapper implements RowMapper<Purchase> {
         boolean active = rs.getBoolean("active" );
 
         Member purchaser = MAP_MEMBER.mapRow( rs, i );
-        return new Purchase(ID, telChatId, inlineMsgId, purchaser, name, amount, date);
+        return new Purchase(id, telChatId, inlineMsgId, purchaser, name, amount, date);
     }
 
 

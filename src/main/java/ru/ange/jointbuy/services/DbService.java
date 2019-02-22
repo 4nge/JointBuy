@@ -101,4 +101,12 @@ public class DbService {
     public Remittance addRemittance(Remittance rem) {
         return remittanceDAO.addRemittance( rem );
     }
+
+    public Remittance getRemittance(int remittanceId) {
+        return remittanceDAO.getRemittance(remittanceId);
+    }
+
+    public Remittance updateRemittance(Remittance remittance) {
+        return remittanceDAO.updateRemittance(remittance);
+    }
 }

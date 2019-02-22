@@ -78,7 +78,7 @@ public class MemberDAO {
 
     public Member getMember(int ID) {
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("ID", ID);
+        params.addValue("id", ID);
 
         String query = String.format(GET_MEMBERS, "") + GET_MEMBERS_ID_FILTER;
 
