@@ -1,7 +1,7 @@
 package ru.ange.jointbuy.bot.response;
 
 import com.vdurmont.emoji.EmojiParser;
-import org.glassfish.grizzly.http.server.io.ServerOutputBuffer;
+
 import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.AnswerInlineQuery;
@@ -16,8 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQuery
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.ange.jointbuy.bot.msg.AddUserMsg;
-import ru.ange.jointbuy.bot.msg.HelloMsg;
+
 import ru.ange.jointbuy.pojo.*;
 import ru.ange.jointbuy.utils.Constants;
 
@@ -101,14 +100,19 @@ public class ResponseHandler {
 //        return EmojiParser.parseToUnicode( msgText );
 //    }
 
-    private String getRemittanceInlineMsgText(String name, double sum, String fName, String lName) {
-        String hashtag = (name != null ? name : "").replace( " ", "_" ) + DF.format( new Date() );
-        String userName = fName + " " + lName;
-        String msgText = String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName,
-                Constants.REMITTANCE_MSG_TEXT_END_LOADING);
-
-        return EmojiParser.parseToUnicode( msgText );
+    private String getHashtag(String name) {
+        return ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
     }
+
+//  private String getRemittanceMsgPtt(String name, double sum, String userName, String end) {
+//        String hashtag =
+////        if ( name != null && !name.isEmpty() ) {
+////            return String.format( Constants.REMITTANCE_NAMED_MSG_TEXT_PTT, hashtag, sum, name, userName, end );
+////        } else {
+////            return String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName, end );
+////        }
+//        return String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName, end );
+//    }
 
     private List<InlineQueryResult> getInlineResult(Operation op, User user) {
         String name = op.getName();
@@ -116,14 +120,20 @@ public class ResponseHandler {
         List<InlineQueryResult> results = new ArrayList<InlineQueryResult>();
 
         if (sum > 0) {
-            String remMsgText = getRemittanceInlineMsgText( name, sum, user.getFirstName(), user.getLastName());
+
+            String userName = user.getFirstName() + " " + user.getLastName();
+            String hashTag = ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
+            String labelLine = ( name != null && !name.isEmpty() ) ?
+                    String.format(Constants.REMITTANCE_MSG_TEXT_PTT_LABEL, name) : "";
+
+            String remMsgText = String.format( Constants.REMITTANCE_MSG_TEXT_PPT_LOADING, hashTag, sum, labelLine, userName );
 
             InputTextMessageContent remitMsgCont = new InputTextMessageContent()
                     //.enableMarkdown( true ) // not work with _
-                    .setMessageText( remMsgText );
+                    .setMessageText( EmojiParser.parseToUnicode( remMsgText ) );
 
             String desc = (name != null) ? String.format( Constants.INLINE_REMIT_DESC_TEXT_PTT, sum, name)
-                    : String.format( Constants.INLINE_REMIT_TEXT_PTT, sum);
+                    : String.format( Constants.INLINE_REMIT_TEXT_PTT, sum );
 
             InlineQueryResultArticle remittance = new InlineQueryResultArticle()
                     .setInputMessageContent(remitMsgCont)
@@ -185,12 +195,12 @@ public class ResponseHandler {
 //    }
 
 
-    public void handleRemittanceMsg(Message msg, Remittance remittance, List<Member> members) {
-        members.remove( remittance.getSender() );
+    public void handleAddRemittanceMsg(Message msg, Remittance rem, List<Member> members) {
+        members.remove( rem.getSender() );
         List<InlineKeyboardButton> btts = new ArrayList<InlineKeyboardButton>();
 
         for (Member member : members) {
-            int remID = remittance.getID();
+            int remID = rem.getID();
             int memID = member.getId();
             String memName = member.getFullName();
             String bttText = String.format( Constants.REMITTANCE_RECIPIENT_BTT_PTT, memName );
@@ -202,23 +212,34 @@ public class ResponseHandler {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
                 .setKeyboard( keyboard );
 
-        String msgEnd = members.size() > 0 ? Constants.REMITTANCE_MSG_TEXT_END_MEMBERS :
-                Constants.REMITTANCE_MSG_TEXT_END_NOT_MEMBERS;
+        String msgPtt = members.size() > 0 ? Constants.REMITTANCE_MSG_TEXT_PTT_MEMBERS :
+                Constants.REMITTANCE_MSG_TEXT_PTT_NOT_MEMBERS;
 
-        // TODO может стоит аново генерировать сообщение а не реплейсить уже созданное ?
-        String text = msg.getText().replaceAll(Constants.REMITTANCE_MSG_TEXT_END_LOADING, msgEnd);
+        String remMsgText = String.format( msgPtt, getHashtag( rem.getName() ), rem.getAmount(),
+                "", rem.getSender().getFullName());
 
         EditMessageText emt = new EditMessageText()
-                .setChatId( remittance.getTelegramChatId() )
+                .setChatId( rem.getTelegramChatId() )
                 .setMessageId( msg.getMessageId() )
-                .enableMarkdown( true )
-                .setText( text )
+                //.enableMarkdown( true )
+                .setText( EmojiParser.parseToUnicode( remMsgText ) )
                 .setReplyMarkup( markupInline );
 
         this.send( emt );
     }
 
+    public void handleUpdateRemittanceMsg(Remittance rem) {
 
+        String remMsgText = String.format( Constants.REMITTANCE_MSG_TEXT_PTT_RECIP, getHashtag(rem.getName()),
+                rem.getAmount(), "", rem.getSender().getFullName(), rem.getRecipient().getFullName() );
+
+        EditMessageText emt = new EditMessageText()
+                .setInlineMessageId( rem.getTelInlineMsgID() )
+                //.enableMarkdown( true )
+                .setText( EmojiParser.parseToUnicode( remMsgText ) );
+
+        this.send( emt );
+    }
 
 
 
@@ -637,5 +658,6 @@ public class ResponseHandler {
                 .setText( EmojiParser.parseToUnicode( text ) )
                 .setCallbackData( callback );
     }
+
 
 }

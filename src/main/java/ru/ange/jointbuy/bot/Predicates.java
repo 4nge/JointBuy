@@ -25,8 +25,7 @@ public class Predicates {
     // ------ Remittance ------
 
     public static Predicate<Update> isInlineRemittanceAnswer() {
-        return Flag.MESSAGE.and(upd ->
-                isMsgMatches(upd, Constants.REMITTANCE_MSG_TEXT_PTT)
+        return Flag.MESSAGE.and(upd -> isMsgMatches(upd, Constants.REMITTANCE_MSG_TEXT_PPT_LOADING)
         );
     }
 
@@ -35,8 +34,6 @@ public class Predicates {
                 isCallbackMatches(upd, Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK)
         );
     }
-
-
 
 
 
@@ -138,14 +135,14 @@ public class Predicates {
 
     private static boolean isCallbackMatches(Update upd, String callback) {
         String query = upd.getCallbackQuery().getData();
-        return query.matches(StringFormater.getRegexFromFormatString(callback));
+        return query.matches( StringFormater.getRegexFromFormatString( callback ) );
     }
 
     private static boolean isMsgMatches(Update upd, String msg) {
         if (upd.getMessage().hasText()) {
             String text = upd.getMessage().getText();
             String format = EmojiParser.parseToUnicode( msg );
-            return StringFormater.matchesFormatString( text, StringFormater.removeMarkdownSyntax( format ));
+            return StringFormater.matchesFormatString( text, StringFormater.removeMarkdownSyntax( format ) );
         }
         return false;
     }

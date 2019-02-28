@@ -28,6 +28,7 @@ public class RemittanceMapper  implements RowMapper<Remittance> {
     private static final String TCHATID_COL_LABEL = "telChatID";
     private static final String TINLINEMSGID_COL_LABEL = "telInlineMsgID";
     private static final String NAME_COL_LABEL = "name";
+    private static final String AMOUNT_COL_LABEL = "amount";
     private static final String DATE_COL_LABEL = "remittanceDate";
     private static final String ACTIVE_COL_LABEL = "active";
 
@@ -45,12 +46,13 @@ public class RemittanceMapper  implements RowMapper<Remittance> {
         Long telegramChatId = rs.getLong(TCHATID_COL_LABEL);
         String inlineMsgId = rs.getString(TINLINEMSGID_COL_LABEL);
         String name = rs.getString(NAME_COL_LABEL);
+        Double amount = rs.getDouble(AMOUNT_COL_LABEL);
         Date date = rs.getDate(DATE_COL_LABEL);
         boolean active = rs.getBoolean(ACTIVE_COL_LABEL);
 
         Member sender = SND_MAPPER.mapRow(rs, i);
         Member recipient = RCP_MAPPER.mapRow(rs, i);
 
-        return new Remittance(id, telegramChatId, inlineMsgId, name, date, sender, recipient, active);
+        return new Remittance(id, telegramChatId, inlineMsgId, name, date, amount, sender, recipient, active);
     }
 }

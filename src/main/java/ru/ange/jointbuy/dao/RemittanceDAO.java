@@ -35,6 +35,7 @@ public class RemittanceDAO {
             "    :chatId, " +
             "    :inlineMsgID, " +
             "    :name, " +
+            "    :amount, " +
             "    :senderId, " +
             "    :recipientID, " +
             "    :remDate,   " +
@@ -48,6 +49,7 @@ public class RemittanceDAO {
                 .addValue("chatId", rem.getTelegramChatId() )
                 .addValue("inlineMsgID", rem.getTelInlineMsgID())
                 .addValue("name", rem.getName() )
+                .addValue("amount", rem.getAmount() )
                 .addValue("senderId", rem.getSender() !=  null ? rem.getSender().getId() : null )
                 .addValue("recipientID", rem.getRecipient() !=  null ? rem.getRecipient().getId() : null )
                 .addValue("remDate", rem.getDate() )
@@ -66,6 +68,7 @@ public class RemittanceDAO {
             "    r.telChatID, " +
             "    r.telInlineMsgID, " +
             "    r.name, " +
+            "    r.amount, " +
             "    r.remittanceDate, " +
             "    r.active, " +
             "    r.senderID, " +
@@ -88,15 +91,41 @@ public class RemittanceDAO {
             "    r.ID = :remId";
 
     public Remittance getRemittance(int remId) {
-
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("remId", remId );
 
         return npjdbc.queryForObject( GET_REMITTANCE, params , MAPPER );
     }
 
+
+
+
+    private static final String UPD_REMITTANCE = "" +
+            "update jointbuy.Remittances as r set "+
+            "    r.telChatID = :telChatID, "+
+            "    r.telInlineMsgID = :telInlineMsgID, "+
+            "    r.name = :name, "+
+            "    r.amount = :amount, "+
+            "    r.senderID = :senderID, "+
+            "    r.recipientID = :recipientID, "+
+            "    r.remittanceDate = :remittanceDate, "+
+            "    r.active = :active "+
+            "where "+
+            "    r.ID = :remID ";
+
     public Remittance updateRemittance(Remittance remittance) {
-        // TODO
-        return null;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("remID", remittance.getID() )
+                .addValue("telChatID", remittance.getTelegramChatId() )
+                .addValue("telInlineMsgID", remittance.getTelInlineMsgID() )
+                .addValue("name", remittance.getName() )
+                .addValue("amount", remittance.getAmount() )
+                .addValue("senderID", remittance.getSender().getId() )
+                .addValue("recipientID", remittance.getRecipient().getId() )
+                .addValue("remittanceDate", remittance.getDate() )
+                .addValue("active", remittance.isActive() );
+
+        npjdbc.update( UPD_REMITTANCE, params );
+        return remittance;
     }
 }

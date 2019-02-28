@@ -161,9 +161,24 @@ public class BotService {
 
     public Remittance addRemittance(long chatId, Message msg) {
 
+        String format = StringFormater.removeMarkdownSyntax(
+                EmojiParser.parseToUnicode( Constants.REMITTANCE_MSG_TEXT_PPT_LOADING )
+        );
+
+        System.out.println("text :\n" + msg.getText() + "\n -------------");
+        System.out.println("ptt :\n" + format + "\n -------------");
+        System.out.println("\n\n\n");
+
+
+        List<String> params = StringFormater.extractParametersFromFormatString( msg.getText(), format );
+        System.out.println("params = " + params);
+
+        double amount = Double.valueOf( params.get(1) );
+
         Member sender = dbService.getMembersByTelegramId( msg.getFrom().getId() );
         Remittance rem = new Remittance()
                 .setTelegramChatId( chatId )
+                .setAmount( amount )
                 .setDate( new Date() )
                 .setActive( false )
                 .setSender( sender );
@@ -262,8 +277,9 @@ public class BotService {
         int remittanceId = m.find() ? Integer.parseInt( m.group() ) : 0;
         int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
 
-        Remittance remittance = dbService.getRemittance( remittanceId );
-        remittance.setRecipient(dbService.getMember( memberId ) );
+        Remittance remittance = dbService.getRemittance( remittanceId )
+                .setRecipient(dbService.getMember( memberId ) )
+                .setTelInlineMsgID(inlineMessageId);
 
         return dbService.updateRemittance(remittance);
     }

@@ -38,7 +38,7 @@ public class JointBuyAbilityBot extends AbilityBot {
     public JointBuyAbilityBot(DefaultBotOptions botOptions, BotService botService) {
         super( TOKEN, NAME, botOptions );
         this.botService = botService;
-        this.responseHandler = new ResponseHandler(sender);
+        this.responseHandler = new ResponseHandler( sender );
     }
 
     @Override
@@ -139,9 +139,9 @@ public class JointBuyAbilityBot extends AbilityBot {
         Consumer<Update> action = upd -> {
             InlineQuery inlineQuery = upd.getInlineQuery();
             User user = inlineQuery.getFrom();
-            responseHandler.answerInlineQuery(inlineQuery.getQuery(), inlineQuery.getId(), user);
+            responseHandler.answerInlineQuery( inlineQuery.getQuery(), inlineQuery.getId(), user );
         };
-        return Reply.of(action, Predicates.isInlineQuery());
+        return Reply.of( action, Predicates.isInlineQuery() );
     }
 
 
@@ -156,7 +156,7 @@ public class JointBuyAbilityBot extends AbilityBot {
 
             Remittance remittance = botService.addRemittance( chatId, msg );
             List<Member> members = botService.getMembers( chatId );
-            responseHandler.handleRemittanceMsg( msg, remittance, members );
+            responseHandler.handleAddRemittanceMsg( msg, remittance, members );
         };
         return Reply.of(action, Predicates.isInlineRemittanceAnswer());
     }
@@ -167,22 +167,11 @@ public class JointBuyAbilityBot extends AbilityBot {
             String data = cbQuery.getData();
             String inlineMessageId = cbQuery.getInlineMessageId();
             User user = cbQuery.getFrom(); // TODO if sender != user alert error
-            Remittance remittance = botService.updateRemittance(data, inlineMessageId);
 
-            System.out.println("user = " + user);
-            System.out.println("remittance = " + remittance);
-
-
-
-            //String data = upd.getCallbackQuery().getData();
-            //int remId =
-            //Remittance remittance = botService.getRemittance();
-
-
-
-            // TODO get recipient and rem id from update, update remittance in bd, change msg.
+            Remittance remittance = botService.updateRemittance( data, inlineMessageId );
+            responseHandler.handleUpdateRemittanceMsg( remittance );
         };
-        return Reply.of(action, Predicates.isRemittanceSetRecipientCallback());
+        return Reply.of( action, Predicates.isRemittanceSetRecipientCallback() );
     }
 
 

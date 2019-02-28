@@ -10,19 +10,21 @@ public class Remittance {
     private String telInlineMsgID;
     private String name;
     private Date date;
+    private double amount;
     private Member sender;
     private Member recipient;
     private boolean active;
 
     public Remittance() {}
 
-    public Remittance(int ID, Long telegramChatId, String inlineMsgId, String name, Date date, Member sender,
-                      Member recipient, boolean active) {
+    public Remittance(int ID, Long telegramChatId, String inlineMsgId, String name, Date date, double amount,
+                      Member sender, Member recipient, boolean active) {
 
         this.ID = ID;
         this.telegramChatId = telegramChatId;
         this.name = name;
         this.date = date;
+        this.amount = amount;
         this.sender = sender;
         this.recipient = recipient;
         this.active = active;
@@ -101,11 +103,24 @@ public class Remittance {
         return this;
     }
 
+    public double getAmount() {
+        return amount;
+    }
+
+    public Remittance setAmount(double amount) {
+        this.amount = amount;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "Remittance{" +
                 "ID=" + ID +
+                ", telegramChatId=" + telegramChatId +
+                ", telInlineMsgID='" + telInlineMsgID + '\'' +
+                ", name='" + name + '\'' +
                 ", date=" + date +
+                ", amount=" + amount +
                 ", sender=" + sender +
                 ", recipient=" + recipient +
                 ", active=" + active +

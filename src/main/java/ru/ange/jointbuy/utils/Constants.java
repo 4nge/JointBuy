@@ -40,14 +40,37 @@ public class Constants {
     public static final String REMITTANCE_INLINE_BTT_IMG_URL = "https://image.ibb.co/dyyzN0/remittance.png";
     public static final String REMITTANCE_INLINE_BTT_TEXT = "Добавить перевод";
 
-    public static final String REMITTANCE_MSG_TEXT_PTT = "#remittance_%s\nПеревод\n:euro: - %s \u20BD\n:incoming_envelope: - %s\n\n%s";
 
-    public static final String REMITTANCE_MSG_TEXT_END_LOADING = "Загрузка списка получателей...";
-    public static final String REMITTANCE_MSG_TEXT_END_NOT_MEMBERS = "Нет доступных получателей.";
-    public static final String REMITTANCE_MSG_TEXT_END_MEMBERS = "Выберите получателя из списка:";
 
-    public static final String REMITTANCE_RECIPIENT_BTT_PTT = ":bust_in_silhouette: %s";
-    public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK = "remittance_recipient_remId_%s_memId_%s";
+    public static final String REMITTANCE_MSG_TEXT_PTT =
+            "#remittance_%s\n" +
+            "Перевод\n" +
+            ":euro: - %s \u20BD\n" +
+            ":label: - %s\n" +
+            ":envelope: - %s";
+
+    public static final String REMITTANCE_MSG_TEXT_PTT_RECIP =
+            REMITTANCE_MSG_TEXT_PTT + "\n" +
+            ":mailbox_with_mail: - %s";
+
+    public static final String REMITTANCE_MSG_TEXT_PPT_LOADING =
+            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
+            ":hourglass_flowing_sand: Идет загрузка списка получателей...";
+
+    public static final String REMITTANCE_MSG_TEXT_PTT_NOT_MEMBERS =
+            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
+            ":exclamation: Нет доступных получателей.";
+
+    public static final String REMITTANCE_MSG_TEXT_PTT_MEMBERS =
+            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
+            ":mag: Выберите получателя из списка:";
+
+    public static final String REMITTANCE_RECIPIENT_BTT_PTT =
+            ":bust_in_silhouette: %s";
+
+    public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK =
+            "remittance_recipient_remId_%s_memId_%s";
+
 
 
 
