@@ -30,6 +30,7 @@ public class StringFormater {
     public static List<String> extractParametersFromFormatString(String str, String format) {
         Pattern pattern = Pattern.compile( getRegexFromFormatString( format ), Pattern.CASE_INSENSITIVE );
         Matcher matcher = pattern.matcher( str );
+
         if (matcher.find()) {
             List<String> parameters = new ArrayList<>(matcher.groupCount());
             for (int i = 0; i < matcher.groupCount(); i++) {

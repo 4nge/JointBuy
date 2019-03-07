@@ -100,19 +100,15 @@ public class ResponseHandler {
 //        return EmojiParser.parseToUnicode( msgText );
 //    }
 
-    private String getHashtag(String name) {
-        return ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
-    }
 
-//  private String getRemittanceMsgPtt(String name, double sum, String userName, String end) {
-//        String hashtag =
-////        if ( name != null && !name.isEmpty() ) {
-////            return String.format( Constants.REMITTANCE_NAMED_MSG_TEXT_PTT, hashtag, sum, name, userName, end );
-////        } else {
-////            return String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName, end );
-////        }
-//        return String.format( Constants.REMITTANCE_MSG_TEXT_PTT, hashtag, sum, userName, end );
-//    }
+
+    public String getRemittanceMsgData(double sum, String name, String userName) {
+        String hashTag = ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
+        String remMsgTextData = ( name != null )  ?
+                String.format(Constants.NAMED_REMITTANCE_MSG, hashTag, sum, name, userName) :
+                String.format(Constants.UNNAMED_REMITTANCE_MSG, hashTag, sum, userName);
+        return remMsgTextData;
+    }
 
     private List<InlineQueryResult> getInlineResult(Operation op, User user) {
         String name = op.getName();
@@ -122,11 +118,8 @@ public class ResponseHandler {
         if (sum > 0) {
 
             String userName = user.getFirstName() + " " + user.getLastName();
-            String hashTag = ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
-            String labelLine = ( name != null && !name.isEmpty() ) ?
-                    String.format(Constants.REMITTANCE_MSG_TEXT_PTT_LABEL, name) : "";
-
-            String remMsgText = String.format( Constants.REMITTANCE_MSG_TEXT_PPT_LOADING, hashTag, sum, labelLine, userName );
+            String remMsgTextData = getRemittanceMsgData( sum, name, userName );
+            String remMsgText = remMsgTextData + Constants.REMITTANCE_MSG_LOADING_LINE;
 
             InputTextMessageContent remitMsgCont = new InputTextMessageContent()
                     //.enableMarkdown( true ) // not work with _
@@ -212,11 +205,10 @@ public class ResponseHandler {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
                 .setKeyboard( keyboard );
 
-        String msgPtt = members.size() > 0 ? Constants.REMITTANCE_MSG_TEXT_PTT_MEMBERS :
-                Constants.REMITTANCE_MSG_TEXT_PTT_NOT_MEMBERS;
-
-        String remMsgText = String.format( msgPtt, getHashtag( rem.getName() ), rem.getAmount(),
-                "", rem.getSender().getFullName());
+        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName() );
+        String remMsgText = members.size() > 0 ?
+                remMsgTextData + Constants.REMITTANCE_MSG_CHOOSE_MEMBERS_LINE :
+                remMsgTextData + Constants.REMITTANCE_MSG_NOT_MEMBERS_LINE;
 
         EditMessageText emt = new EditMessageText()
                 .setChatId( rem.getTelegramChatId() )
@@ -230,8 +222,9 @@ public class ResponseHandler {
 
     public void handleUpdateRemittanceMsg(Remittance rem) {
 
-        String remMsgText = String.format( Constants.REMITTANCE_MSG_TEXT_PTT_RECIP, getHashtag(rem.getName()),
-                rem.getAmount(), "", rem.getSender().getFullName(), rem.getRecipient().getFullName() );
+        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName() );
+        String remMsgPtt = remMsgTextData + Constants.REMITTANCE_MSG_RECIP_LINE;
+        String remMsgText = String.format( remMsgPtt, rem.getRecipient().getFullName() );
 
         EditMessageText emt = new EditMessageText()
                 .setInlineMessageId( rem.getTelInlineMsgID() )

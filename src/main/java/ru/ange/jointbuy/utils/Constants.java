@@ -41,50 +41,45 @@ public class Constants {
     public static final String REMITTANCE_INLINE_BTT_TEXT = "Добавить перевод";
 
 
-
-    public static final String REMITTANCE_MSG_TEXT_PTT =
+    public static final String REMITTANCE_MSG_START =
             "#remittance_%s\n" +
             "Перевод\n" +
-            ":euro: - %s \u20BD\n" +
-            ":label: - %s\n" +
+            ":euro: - %s \u20BD\n";
+
+    public static final String REMITTANCE_MSG_ENVELOPE_LINE =
             ":envelope: - %s";
 
-    public static final String REMITTANCE_MSG_TEXT_PTT_RECIP =
-            REMITTANCE_MSG_TEXT_PTT + "\n" +
-            ":mailbox_with_mail: - %s";
+    public static final String REMITTANCE_MSG_LABEL_LINE =
+            ":label: - %s\n";
 
-    public static final String REMITTANCE_MSG_TEXT_PPT_LOADING =
-            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
-            ":hourglass_flowing_sand: Идет загрузка списка получателей...";
+    public static final String REMITTANCE_MSG_RECIP_LINE =
+            "\n:mailbox_with_mail: - %s";
 
-    public static final String REMITTANCE_MSG_TEXT_PTT_NOT_MEMBERS =
-            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
-            ":exclamation: Нет доступных получателей.";
+    public static final String REMITTANCE_MSG_LOADING_LINE =
+            "\n\n:hourglass_flowing_sand: Идет загрузка списка получателей...";
 
-    public static final String REMITTANCE_MSG_TEXT_PTT_MEMBERS =
-            REMITTANCE_MSG_TEXT_PTT + "\n\n" +
-            ":mag: Выберите получателя из списка:";
+    public static final String REMITTANCE_MSG_NOT_MEMBERS_LINE =
+            "\n\n:exclamation: Нет доступных получателей.";
+
+
+    public static final String REMITTANCE_MSG_CHOOSE_MEMBERS_LINE =
+            "\n\n:mag: Выберите получателя из списка:";
+
+
+    public static final String NAMED_REMITTANCE_MSG =
+            REMITTANCE_MSG_START +
+            REMITTANCE_MSG_LABEL_LINE +
+            REMITTANCE_MSG_ENVELOPE_LINE;
+
+    public static final String UNNAMED_REMITTANCE_MSG =
+            REMITTANCE_MSG_START +
+            REMITTANCE_MSG_ENVELOPE_LINE;
 
     public static final String REMITTANCE_RECIPIENT_BTT_PTT =
             ":bust_in_silhouette: %s";
 
     public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK =
             "remittance_recipient_remId_%s_memId_%s";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

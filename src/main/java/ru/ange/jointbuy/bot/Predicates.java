@@ -24,9 +24,34 @@ public class Predicates {
 
     // ------ Remittance ------
 
+//    public static Predicate<Update> isInlineRemittanceAnswer() {
+//        return Flag.MESSAGE.and(upd ->
+//            isMsgMatches(upd, Constants.NAMED_REMITTANCE_MSG + Constants.REMITTANCE_MSG_LOADING_LINE)
+//            || isMsgMatches(upd, Constants.UNNAMED_REMITTANCE_MSG + Constants.REMITTANCE_MSG_LOADING_LINE)
+//        );
+//    }
+
+
+    public static boolean isNamedRemittanceMsg(String msg) {
+        return isMatches( msg,Constants.NAMED_REMITTANCE_MSG + Constants.REMITTANCE_MSG_LOADING_LINE );
+    }
+
+    public static boolean isUnNamedRemittanceMsg(String msg) {
+        return isMatches( msg,Constants.UNNAMED_REMITTANCE_MSG + Constants.REMITTANCE_MSG_LOADING_LINE );
+    }
+
+
+    public static boolean isRemittanceMsg(Update upd) {
+        if (upd.hasMessage() && upd.getMessage().hasText()) {
+            String text = upd.getMessage().getText();
+            return isNamedRemittanceMsg(text) || isUnNamedRemittanceMsg(text);
+        } else {
+            return false;
+        }
+    }
+
     public static Predicate<Update> isInlineRemittanceAnswer() {
-        return Flag.MESSAGE.and(upd -> isMsgMatches(upd, Constants.REMITTANCE_MSG_TEXT_PPT_LOADING)
-        );
+        return Flag.MESSAGE.and( upd -> isRemittanceMsg(upd));
     }
 
     public static Predicate<Update> isRemittanceSetRecipientCallback() {
@@ -130,19 +155,20 @@ public class Predicates {
     }
 
 
-
-
-
     private static boolean isCallbackMatches(Update upd, String callback) {
         String query = upd.getCallbackQuery().getData();
         return query.matches( StringFormater.getRegexFromFormatString( callback ) );
     }
 
+    private static boolean isMatches(String text, String ptt) {
+        String format = EmojiParser.parseToUnicode( ptt );
+        return StringFormater.matchesFormatString( text, StringFormater.removeMarkdownSyntax( format ) );
+    }
+
     private static boolean isMsgMatches(Update upd, String msg) {
         if (upd.getMessage().hasText()) {
             String text = upd.getMessage().getText();
-            String format = EmojiParser.parseToUnicode( msg );
-            return StringFormater.matchesFormatString( text, StringFormater.removeMarkdownSyntax( format ) );
+            return isMatches(text, msg);
         }
         return false;
     }

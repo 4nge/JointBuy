@@ -41,6 +41,12 @@ public class JointBuyAbilityBot extends AbilityBot {
         this.responseHandler = new ResponseHandler( sender );
     }
 
+    public JointBuyAbilityBot(BotService botService) {
+        super( TOKEN, NAME );
+        this.botService = botService;
+        this.responseHandler = new ResponseHandler( sender );
+    }
+
     @Override
     public int creatorId() {
         return 0;
@@ -116,6 +122,7 @@ public class JointBuyAbilityBot extends AbilityBot {
 //
 //
 //    public Ability spitPurchasesCommand() {
+
 //        return Ability.builder()
 //                .name( Constants.SPLIT_PURCHASES_COMMAND_NAME )
 //                .info( Constants.SPLIT_PURCHASES_COMMAND_DESCRIPTION )
@@ -153,8 +160,8 @@ public class JointBuyAbilityBot extends AbilityBot {
         Consumer<Update> action = upd -> {
             long chatId = getChatId( upd );
             Message msg = upd.getMessage();
-
-            Remittance remittance = botService.addRemittance( chatId, msg );
+            boolean isNamedRemittance = Predicates.isNamedRemittanceMsg( msg.getText() );
+            Remittance remittance = botService.addRemittance( chatId, msg, isNamedRemittance );
             List<Member> members = botService.getMembers( chatId );
             responseHandler.handleAddRemittanceMsg( msg, remittance, members );
         };

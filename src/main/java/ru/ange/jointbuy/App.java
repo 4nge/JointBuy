@@ -1,6 +1,8 @@
 package ru.ange.jointbuy;
 
 
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.ApiContextInitializer;
@@ -56,7 +58,7 @@ public class App {
             botsApi.registerBot( jointBuyBot );
 
 
-        } catch (TelegramApiRequestException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

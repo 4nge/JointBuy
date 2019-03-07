@@ -2,6 +2,7 @@ package ru.ange.jointbuy.services;
 
 
 import com.vdurmont.emoji.EmojiParser;
+import org.glassfish.grizzly.http.server.io.ServerOutputBuffer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -159,27 +160,22 @@ public class BotService {
         return null;
     }
 
-    public Remittance addRemittance(long chatId, Message msg) {
+    public Remittance addRemittance(long chatId, Message msg, boolean isNamedRemittance) {
 
-        String format = StringFormater.removeMarkdownSyntax(
-                EmojiParser.parseToUnicode( Constants.REMITTANCE_MSG_TEXT_PPT_LOADING )
-        );
+        String startMsgPtt = isNamedRemittance ? Constants.NAMED_REMITTANCE_MSG : Constants.UNNAMED_REMITTANCE_MSG;
+        String msgPtt = EmojiParser.parseToUnicode( startMsgPtt + Constants.REMITTANCE_MSG_LOADING_LINE );
 
-        System.out.println("text :\n" + msg.getText() + "\n -------------");
-        System.out.println("ptt :\n" + format + "\n -------------");
-        System.out.println("\n\n\n");
-
-
-        List<String> params = StringFormater.extractParametersFromFormatString( msg.getText(), format );
-        System.out.println("params = " + params);
-
+        List<String> params = StringFormater.extractParametersFromFormatString( msg.getText(), msgPtt );
         double amount = Double.valueOf( params.get(1) );
+        String name = isNamedRemittance ? params.get(2) : null;
 
         Member sender = dbService.getMembersByTelegramId( msg.getFrom().getId() );
+
         Remittance rem = new Remittance()
                 .setTelegramChatId( chatId )
                 .setAmount( amount )
                 .setDate( new Date() )
+                .setName( name )
                 .setActive( false )
                 .setSender( sender );
 
@@ -278,6 +274,7 @@ public class BotService {
         int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
 
         Remittance remittance = dbService.getRemittance( remittanceId )
+                .setActive( true )
                 .setRecipient(dbService.getMember( memberId ) )
                 .setTelInlineMsgID(inlineMessageId);
 
