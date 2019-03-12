@@ -188,6 +188,26 @@ public class ResponseHandler {
 //    }
 
 
+    private InlineKeyboardMarkup getRemittanceKeyboardMarkup(Remittance remittance) {
+
+        String editCallBack = String.format( Constants.REMITTANCE_EDIT_BTT_CALLBACK, remittance.getID() );
+        List<InlineKeyboardButton> editLine = new ArrayList<>();
+        editLine.add( createInlineKeyboardBtt( Constants.EDIT_BTT_LABEL, editCallBack ) );
+
+        String deleteCallBack = String.format( Constants.REMITTANCE_EDIT_BTT_CALLBACK, remittance.getID() );
+        List<InlineKeyboardButton> delLine = new ArrayList<>();
+        delLine.add( createInlineKeyboardBtt( Constants.DELETE_BTT_LABEL, deleteCallBack ) );
+
+        List<List<InlineKeyboardButton>> lines = new ArrayList<>();
+        lines.add( editLine );
+        lines.add( delLine );
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup().setKeyboard( lines );
+
+        return markupInline;
+    }
+
+
     public void handleAddRemittanceMsg(Message msg, Remittance rem, List<Member> members) {
         members.remove( rem.getSender() );
         List<InlineKeyboardButton> btts = new ArrayList<InlineKeyboardButton>();
@@ -229,6 +249,7 @@ public class ResponseHandler {
         EditMessageText emt = new EditMessageText()
                 .setInlineMessageId( rem.getTelInlineMsgID() )
                 //.enableMarkdown( true )
+                .setReplyMarkup( getRemittanceKeyboardMarkup( rem ) )
                 .setText( EmojiParser.parseToUnicode( remMsgText ) );
 
         this.send( emt );
@@ -653,4 +674,7 @@ public class ResponseHandler {
     }
 
 
+    public void handleEditRemittanceBtt(Remittance remittance) {
+        // show editing remittance object buttons
+    }
 }

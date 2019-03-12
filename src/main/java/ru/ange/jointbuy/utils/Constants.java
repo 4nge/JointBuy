@@ -34,8 +34,9 @@ public class Constants {
     public static final String BUY_IMG_BTT_TEXT = "Добавить покупку";
 
 
-
+    // ------------------------
     // ------ Remittance ------
+    // ------------------------
 
     public static final String REMITTANCE_INLINE_BTT_IMG_URL = "https://image.ibb.co/dyyzN0/remittance.png";
     public static final String REMITTANCE_INLINE_BTT_TEXT = "Добавить перевод";
@@ -81,7 +82,17 @@ public class Constants {
     public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK =
             "remittance_recipient_remId_%s_memId_%s";
 
+    public static final String REMITTANCE_EDIT_BTT_CALLBACK = "edit_purchase_%s";
+    public static final String REMITTANCE_DELETE_CALLBACK = "delete_purchase_%s";
 
+
+
+    // ------------------------
+    // ------ Buttons ------
+    // ------------------------
+
+    public static final String EDIT_BTT_LABEL = ":pencil: Радактировать";
+    public static final String DELETE_BTT_LABEL = "\uD83D\uDDD1️ Удалить";
 
 
 

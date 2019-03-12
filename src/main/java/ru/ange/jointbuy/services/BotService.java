@@ -280,4 +280,10 @@ public class BotService {
 
         return dbService.updateRemittance(remittance);
     }
+
+    public Remittance getRemittance(String query) {
+        // TODO get id from callback query
+        // load remittancy by id and return it
+        return null;
+    }
 }

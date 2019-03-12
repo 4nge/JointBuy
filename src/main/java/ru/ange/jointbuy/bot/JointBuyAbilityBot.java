@@ -181,7 +181,21 @@ public class JointBuyAbilityBot extends AbilityBot {
         return Reply.of( action, Predicates.isRemittanceSetRecipientCallback() );
     }
 
+    public Reply handleEditRemittance() {
+        Consumer<Update> action = upd -> {
+            String query = upd.getCallbackQuery().getData();
+            Remittance remittance = botService.getRemittance( query );
+            responseHandler.handleEditRemittanceBtt( remittance );
+        };
+        return Reply.of( action, Predicates.isEditRemittanceCallback() );
+    }
 
+    public Reply handleDeleteRemittance() {
+        Consumer<Update> action = upd -> {
+
+        };
+        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
+    }
 
 
 

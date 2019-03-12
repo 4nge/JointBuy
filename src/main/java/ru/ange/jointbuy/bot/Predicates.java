@@ -60,7 +60,17 @@ public class Predicates {
         );
     }
 
+    public static Predicate<Update> isEditRemittanceCallback() {
+        return Flag.CALLBACK_QUERY.and(upd ->
+                isCallbackMatches(upd, Constants.REMITTANCE_EDIT_BTT_CALLBACK)
+        );
+    }
 
+    public static Predicate<Update> isDeleteRemittanceCallback() {
+        return Flag.CALLBACK_QUERY.and(upd ->
+                isCallbackMatches(upd, Constants.REMITTANCE_DELETE_CALLBACK)
+        );
+    }
 
 
     public static Predicate<Update> isHelloReply() {
