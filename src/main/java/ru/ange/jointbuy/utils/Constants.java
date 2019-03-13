@@ -43,7 +43,7 @@ public class Constants {
 
 
     public static final String REMITTANCE_MSG_START =
-            "#remittance_%s\n" +
+            "%s\n" +
             "Перевод\n" +
             ":euro: - %s \u20BD\n";
 
@@ -82,8 +82,12 @@ public class Constants {
     public static final String REMITTANCE_RECIPIENT_BTT_CALLBACK =
             "remittance_recipient_remId_%s_memId_%s";
 
-    public static final String REMITTANCE_EDIT_BTT_CALLBACK = "edit_purchase_%s";
-    public static final String REMITTANCE_DELETE_CALLBACK = "delete_purchase_%s";
+    public static final String REMITTANCE_DELETED_MSG = "%s \nЭтот перевод был удалён";
+
+    public static final String REMITTANCE_EDIT_BTT_CALLBACK = "edit_remittance_%s";
+    public static final String REMITTANCE_DELETE_CALLBACK = "delete_remittance_%s";
+    public static final String REMITTANCE_RESTORE_CALLBACK = "restore_remittance_%s";
+
 
 
 
@@ -93,7 +97,7 @@ public class Constants {
 
     public static final String EDIT_BTT_LABEL = ":pencil: Радактировать";
     public static final String DELETE_BTT_LABEL = "\uD83D\uDDD1️ Удалить";
-
+    public static final String RESTORE_BTT_LABEL = ":leftwards_arrow_with_hook: Востановить";
 
 
 

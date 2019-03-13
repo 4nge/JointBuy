@@ -101,9 +101,13 @@ public class ResponseHandler {
 //    }
 
 
+    private String getRemittanceHashtag(String name, Date date) {
+        return "#remittance_" + (name != null ? name : "").replace( " ", "_" ) + DF.format( date );
+    }
 
-    public String getRemittanceMsgData(double sum, String name, String userName) {
-        String hashTag = ( name != null ? name : "" ).replace( " ", "_" ) + DF.format( new Date() );
+
+    public String getRemittanceMsgData(double sum, String name, String userName, Date date) {
+        String hashTag = getRemittanceHashtag(name, date);
         String remMsgTextData = ( name != null )  ?
                 String.format(Constants.NAMED_REMITTANCE_MSG, hashTag, sum, name, userName) :
                 String.format(Constants.UNNAMED_REMITTANCE_MSG, hashTag, sum, userName);
@@ -118,7 +122,7 @@ public class ResponseHandler {
         if (sum > 0) {
 
             String userName = user.getFirstName() + " " + user.getLastName();
-            String remMsgTextData = getRemittanceMsgData( sum, name, userName );
+            String remMsgTextData = getRemittanceMsgData( sum, name, userName, new Date() );
             String remMsgText = remMsgTextData + Constants.REMITTANCE_MSG_LOADING_LINE;
 
             InputTextMessageContent remitMsgCont = new InputTextMessageContent()
@@ -194,7 +198,7 @@ public class ResponseHandler {
         List<InlineKeyboardButton> editLine = new ArrayList<>();
         editLine.add( createInlineKeyboardBtt( Constants.EDIT_BTT_LABEL, editCallBack ) );
 
-        String deleteCallBack = String.format( Constants.REMITTANCE_EDIT_BTT_CALLBACK, remittance.getID() );
+        String deleteCallBack = String.format( Constants.REMITTANCE_DELETE_CALLBACK, remittance.getID() );
         List<InlineKeyboardButton> delLine = new ArrayList<>();
         delLine.add( createInlineKeyboardBtt( Constants.DELETE_BTT_LABEL, deleteCallBack ) );
 
@@ -225,7 +229,8 @@ public class ResponseHandler {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
                 .setKeyboard( keyboard );
 
-        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName() );
+        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
+                rem.getDate() );
         String remMsgText = members.size() > 0 ?
                 remMsgTextData + Constants.REMITTANCE_MSG_CHOOSE_MEMBERS_LINE :
                 remMsgTextData + Constants.REMITTANCE_MSG_NOT_MEMBERS_LINE;
@@ -242,7 +247,8 @@ public class ResponseHandler {
 
     public void handleUpdateRemittanceMsg(Remittance rem) {
 
-        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName() );
+        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
+                rem.getDate() );
         String remMsgPtt = remMsgTextData + Constants.REMITTANCE_MSG_RECIP_LINE;
         String remMsgText = String.format( remMsgPtt, rem.getRecipient().getFullName() );
 
@@ -673,8 +679,46 @@ public class ResponseHandler {
                 .setCallbackData( callback );
     }
 
+    public void handleRemoveRemittance(String inlineMsgId, Remittance remittance) {
+        try {
+            String restoreCallback = String.format(Constants.REMITTANCE_RESTORE_CALLBACK, remittance.getID());
+            List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+                    createInlineKeyboardBtt( Constants.RESTORE_BTT_LABEL, restoreCallback )
+            );
 
-    public void handleEditRemittanceBtt(Remittance remittance) {
-        // show editing remittance object buttons
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            markupInline.setKeyboard( keyboard );
+
+            String hashtag = getRemittanceHashtag( remittance.getName(), remittance.getDate() );
+            String text = String.format( Constants.REMITTANCE_DELETED_MSG, hashtag );
+
+            EditMessageText emt = new EditMessageText()
+                    .setInlineMessageId( inlineMsgId )
+                    .setText( text )
+                    .setReplyMarkup( markupInline );
+                    //.enableMarkdown( true );
+
+            sender.execute( emt );
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void handleRestoreRemittance(String inlineMsgId, Remittance rem) {
+        try {
+            String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
+                    rem.getDate() );
+            String remMsgPtt = remMsgTextData + Constants.REMITTANCE_MSG_RECIP_LINE;
+            String remMsgText = String.format( remMsgPtt, rem.getRecipient().getFullName() );
+
+            EditMessageText emt = new EditMessageText()
+                    .setInlineMessageId( inlineMsgId )
+                    .setText( EmojiParser.parseToUnicode( remMsgText ) )
+                    .setReplyMarkup( getRemittanceKeyboardMarkup( rem ) );
+
+            sender.execute( emt );
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 }

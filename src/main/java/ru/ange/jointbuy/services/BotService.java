@@ -238,9 +238,6 @@ public class BotService {
         dbService.addPurchaseMember(purchaseID, memberId);
     }
 
-    public void removePurchase(Purchase purchase) {
-        dbService.removePurchase(purchase);
-    }
 
     public Purchase deactivePurchase(String inlineMsgId) {
         Purchase purchase = dbService.getPurchase( inlineMsgId );
@@ -273,17 +270,33 @@ public class BotService {
         int remittanceId = m.find() ? Integer.parseInt( m.group() ) : 0;
         int memberId = m.find() ? Integer.parseInt( m.group() ) : 0;
 
-        Remittance remittance = dbService.getRemittance( remittanceId )
+        Remittance editedRem = dbService.getRemittance( remittanceId )
                 .setActive( true )
                 .setRecipient(dbService.getMember( memberId ) )
                 .setTelInlineMsgID(inlineMessageId);
 
-        return dbService.updateRemittance(remittance);
+        return dbService.updateRemittance( editedRem );
     }
 
-    public Remittance getRemittance(String query) {
-        // TODO get id from callback query
-        // load remittancy by id and return it
-        return null;
+    public Remittance deactiveRemittance(String query) {
+        Pattern p = Pattern.compile( "\\d+" );
+        Matcher m = p.matcher( query );
+        int remittanceId = m.find() ? Integer.parseInt( m.group() ) : 0;
+
+        Remittance editedRem = dbService.getRemittance( remittanceId )
+                .setActive( false );
+
+        return dbService.updateRemittance( editedRem );
+    }
+
+    public Remittance restoreRemittance(String query) {
+        Pattern p = Pattern.compile( "\\d+" );
+        Matcher m = p.matcher( query );
+        int remittanceId = m.find() ? Integer.parseInt( m.group() ) : 0;
+
+        Remittance editedRem = dbService.getRemittance( remittanceId )
+                .setActive( true );
+
+        return dbService.updateRemittance( editedRem );
     }
 }

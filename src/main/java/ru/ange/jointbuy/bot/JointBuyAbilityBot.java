@@ -184,19 +184,35 @@ public class JointBuyAbilityBot extends AbilityBot {
     public Reply handleEditRemittance() {
         Consumer<Update> action = upd -> {
             String query = upd.getCallbackQuery().getData();
-            Remittance remittance = botService.getRemittance( query );
-            responseHandler.handleEditRemittanceBtt( remittance );
+            //Remittance remittance = botService.getRemittance( query );
+            //responseHandler.handleEditRemittanceBtt( remittance );
         };
         return Reply.of( action, Predicates.isEditRemittanceCallback() );
     }
 
     public Reply handleDeleteRemittance() {
         Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String query = callbackQuery.getData();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
 
+            Remittance deactiveRemittance = botService.deactiveRemittance( query );
+            responseHandler.handleRemoveRemittance(inlineMsgId, deactiveRemittance);
         };
         return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
     }
 
+    public Reply handleRestoreRemittance() {
+        Consumer<Update> action = upd -> {
+            CallbackQuery callbackQuery = upd.getCallbackQuery();
+            String query = callbackQuery.getData();
+            String inlineMsgId = callbackQuery.getInlineMessageId();
+
+            Remittance restoredRemittance = botService.restoreRemittance( query );
+            responseHandler.handleRestoreRemittance(inlineMsgId, restoredRemittance);
+        };
+        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
+    }
 
 
 //    public Reply handleInlineAnswerPurchaseMsg() {
