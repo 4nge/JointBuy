@@ -1,7 +1,5 @@
 package ru.ange.jointbuy.utils;
 
-import ru.ange.jointbuy.bot.JointBuyAbilityBot;
-
 public class Constants {
 
 
@@ -173,7 +171,7 @@ public class Constants {
     public static final String RESTORE_PURCHASE_BTT_TEXT = ":leftwards_arrow_with_hook: Востановить";
     public static final String RESTORE_PURCHASE_CALLBACK = "restore_purchase";
 
-    public static final String LIST_PURCHASES_MSG_EMPTY = "Список покупок пока пуст. Для добавления новых записей наберите '@" + JointBuyAbilityBot.NAME + " сумма Наименование покупки'";
+    //public static final String LIST_PURCHASES_MSG_EMPTY = "Список покупок пока пуст. Для добавления новых записей наберите '@" + JointBuyBot.getName() + " сумма Наименование покупки'";
 
     public static final String LIST_PURCHASES_MSG_PTT = "Список покупок:%s\n\n `ИТОГО (%s) : ` *%s* \u20BD";
     public static final String LIST_PURCHASE_LINE_PTT = "\n\n#%s\n:euro: %s \u20BD : \uD83C\uDFF7️ *%s*";

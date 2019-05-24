@@ -1,56 +1,57 @@
 package ru.ange.jointbuy.bot;
 
 import org.telegram.abilitybots.api.bot.AbilityBot;
-import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.Flag;
 import org.telegram.abilitybots.api.objects.Reply;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.ange.jointbuy.bot.msg.AddUserMsg;
-import ru.ange.jointbuy.bot.response.ResponseHandler;
-import ru.ange.jointbuy.exception.MemberAlreadyExistException;
-import ru.ange.jointbuy.pojo.*;
-import ru.ange.jointbuy.services.BotService;
-import ru.ange.jointbuy.utils.Constants;
+import ru.ange.jointbuy.bot.response.replies.AnswerHelloMsg;
+import ru.ange.jointbuy.bot.response.replies.HelloMsg;
+import ru.ange.jointbuy.bot.response.replies.InlineQueryAnswer;
+import ru.ange.jointbuy.bot.response.Predicates;
+import ru.ange.jointbuy.bot.response.replies.remittance.RemittanceInlineAnswer;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
-import static org.telegram.abilitybots.api.objects.Locality.ALL;
-import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 import static org.telegram.abilitybots.api.util.AbilityUtils.getChatId;
-import static ru.ange.jointbuy.bot.Predicates.isHelloReply;
 
-public class JointBuyAbilityBot extends AbilityBot {
 
-    public static final String TOKEN = "795411227:AAEM4KjNFi9AayQzPr4eTAAQ3VcQA9QRpjw";
-    public static final String NAME = "JointBuyBot";
+public class JointBuyBot extends AbilityBot {
 
-    private BotService botService;
-    private ResponseHandler responseHandler;
+    private JointBuyBotService botService;
 
-    public JointBuyAbilityBot(DefaultBotOptions botOptions, BotService botService) {
-        super( TOKEN, NAME, botOptions );
-        this.botService = botService;
-        this.responseHandler = new ResponseHandler( sender );
+    public JointBuyBot(String botToken, String botName, DefaultBotOptions botOptions ) {
+        super( botToken, botName, botOptions );
+        this.initComponent();
     }
 
-    public JointBuyAbilityBot(BotService botService) {
-        super( TOKEN, NAME );
-        this.botService = botService;
-        this.responseHandler = new ResponseHandler( sender );
+    public JointBuyBot(String botToken, String botName ) {
+        super( botToken, botName );
+        this.initComponent();
     }
+
+    private void initComponent() {
+        this.botService = JointBuyBotService.getInstance();
+    }
+
 
     @Override
     public int creatorId() {
         return 0;
     }
+
+
+    private void send(BotApiMethod bam) {
+        try {
+            sender.execute( bam );
+        } catch (TelegramApiException e) {
+            // TODO add logger
+            e.printStackTrace();
+        }
+    }
+
 
 
     // --------------------------------
@@ -59,13 +60,11 @@ public class JointBuyAbilityBot extends AbilityBot {
 
     public Reply sayHello() {
         Consumer<Update> action = upd -> {
-            long chatId = getChatId( upd );
-            List<Member> members = botService.getMembers( new ArrayList<User>(users().values()), chatId );
-            responseHandler.sendHelloMsg( chatId, members );
+            HelloMsg msg = botService.getHelloMsg( upd, getChatId( upd ), users().values() );
+            send( msg );
         };
         try {
-            User me = getMe();
-            return Reply.of(action, Predicates.isAddMyself(me));
+            return Reply.of( action, Predicates.isAddMyself( getMe() ) );
         } catch (TelegramApiException e) {
             return null;
         }
@@ -73,16 +72,86 @@ public class JointBuyAbilityBot extends AbilityBot {
 
     public Reply replyJoinBtt() {
         Consumer<Update> action = upd -> {
-            String callId = upd.getCallbackQuery().getId();
-            try {
-                botService.handleAddUserBtt( upd, getChatId( upd ) );
-                responseHandler.alertUserAdded( callId );
-            } catch (MemberAlreadyExistException e) {
-                responseHandler.alertUserAlreadyExist( callId );
-            }
+            AnswerHelloMsg answer = botService.getAnswerHelloMsg( upd, getChatId( upd ) );
+            send( answer );
         };
-        return Reply.of(action, isHelloReply());
+        return Reply.of( action, Flag.CALLBACK_QUERY.and( Predicates.isCallbackMatches(
+                HelloMsg.getJoinUserBttCallback() ) ) );
     }
+
+
+
+    // ----------------------------
+    // ------ Inline actions ------
+    // ----------------------------
+
+    public Reply handleInlineQuery() {
+        Consumer<Update> action = upd -> {
+            InlineQueryAnswer answer = botService.getInlineQueryAnswer( upd );
+            send( answer );
+        };
+        return Reply.of( action, Predicates.isInlineQuery() );
+    }
+
+
+
+    public Reply handleRemittanceInlineAnswerMsg() {
+        Consumer<Update> action = upd -> {
+            RemittanceInlineAnswer answer = botService.getRemittanceInlineAnswer(upd, getChatId( upd ));
+            send( answer );
+
+//            RemittanceInlineAnswer answer
+//            long chatId = getChatId( upd );
+//            Message replies = upd.getMessage();
+//            boolean isNamedRemittance = Predicates.isNamedRemittanceMsg( replies.getText() );
+//            Remittance remittance = botService.addRemittance( chatId, replies, isNamedRemittance );
+//            List<Member> members = botService.getMembers( chatId );
+//            responseHandler.handleAddRemittanceMsg( replies, remittance, members );
+        };
+        return Reply.of( action, Predicates.isInlineRemittanceAnswer() );
+    }
+
+
+
+
+
+//    // ---------------------
+//    // ------ Actions ------
+//    // ---------------------
+//
+//public Reply sayHello() {
+//        Consumer<Update> action = upd -> {
+//
+//            HelloMsg replies = botService.getHelloMsg(Update upd);
+//            sender.execute( replies );
+//
+//            long chatId = getChatId( upd );
+//            List<Member> members = botService.getMembers( new ArrayList<User>(users().values()), chatId );
+//            responseHandler.sendHelloMsg( chatId, members );
+//        };
+//        try {
+//            User me = getMe();
+//            return Reply.of(action, Predicates.isAddMyself(me));
+//        } catch (TelegramApiException e) {
+//            return null;
+//        }
+
+//    public Reply sayHello() {
+//        try {
+//
+//            SayHello sh = new SayHello( users().values() );
+//
+//            Predicate ianm = Predicates.isAddNewMember();
+//            Predicate iam = Predicates.isAddMyself( getMe() );
+//
+//            return Reply.of( sh, ianm.and( iam ) );
+//
+//        } catch (TelegramApiException e) {
+//            return null;
+//        }
+//    }
+
+
 
 
     // ----------------------
@@ -90,8 +159,10 @@ public class JointBuyAbilityBot extends AbilityBot {
     // ----------------------
 
 //    public Ability addUsersCommand() {
-//        AddUserMsg addUserMsg = new AddUserMsg();
-//        return Ability.builder()
+//
+//        //AddUserMsg addUserMsg = new AddUserMsg();
+//
+//        Ability addUserCommand = Ability.builder()
 //                .name( Constants.ADD_USER_COMMAND_NAME )
 //                .info( Constants.ADD_USER_COMMAND_DESCRIPTION )
 //                .locality(ALL)
@@ -100,11 +171,14 @@ public class JointBuyAbilityBot extends AbilityBot {
 //                    silent.forceReply( addUserMsg.getText(), ctx.chatId() );
 //                })
 //                .reply(upd -> {
-//                    botService.handleAddUserCommand(upd, getChatId( upd ));
-//                }, Flag.MESSAGE, Flag.REPLY, Predicates.isReplyToBot(getBotUsername()),
+//                            botService.handleAddUserCommand(upd, getChatId( upd ));
+//                        }, Flag.MESSAGE, Flag.REPLY, Predicates.isReplyToBot(getBotUsername()),
 //                        Predicates.isReplyToMessage(addUserMsg.getText()))
 //                .build();
+//
+//        return addUserCommand;
 //    }
+
 //
 //    public Ability listOperationCommand() {
 //        return Ability.builder()
@@ -142,85 +216,96 @@ public class JointBuyAbilityBot extends AbilityBot {
     // ------ Inline actions ------
     // ----------------------------
 
-    public Reply handleInlineQuery() {
-        Consumer<Update> action = upd -> {
-            InlineQuery inlineQuery = upd.getInlineQuery();
-            User user = inlineQuery.getFrom();
-            responseHandler.answerInlineQuery( inlineQuery.getQuery(), inlineQuery.getId(), user );
-        };
-        return Reply.of( action, Predicates.isInlineQuery() );
-    }
+
+//    public Reply handleQuery() {
+//        Consumer<Update> action = upd -> {
+//            InlineQuery inlineQuery = upd.getInlineQuery();
+//            User user = inlineQuery.getFrom();
+//            responseHandler.answerInlineQuery( inlineQuery.getQuery(), inlineQuery.getId(), user );
+//        };
+//        return Reply.of( action, Predicates.isInlineQuery() );
+//    }
+//
+//
+//    public Reply handleInlineQuery() {
+//        Consumer<Update> action = upd -> {
+//            InlineQuery inlineQuery = upd.getInlineQuery();
+//            User user = inlineQuery.getFrom();
+//            responseHandler.answerInlineQuery( inlineQuery.getQuery(), inlineQuery.getId(), user );
+//        };
+//        return Reply.of( action, Predicates.isInlineQuery() );
+//    }
 
 
     // ------------------------
     // ------ Remittance ------
     // ------------------------
 
-    public Reply handleRemittanceInlineAnswerMsg() {
-        Consumer<Update> action = upd -> {
-            long chatId = getChatId( upd );
-            Message msg = upd.getMessage();
-            boolean isNamedRemittance = Predicates.isNamedRemittanceMsg( msg.getText() );
-            Remittance remittance = botService.addRemittance( chatId, msg, isNamedRemittance );
-            List<Member> members = botService.getMembers( chatId );
-            responseHandler.handleAddRemittanceMsg( msg, remittance, members );
-        };
-        return Reply.of(action, Predicates.isInlineRemittanceAnswer());
-    }
-
-    public Reply handleRemittanceSetRecipient() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery cbQuery = upd.getCallbackQuery();
-            String data = cbQuery.getData();
-            String inlineMessageId = cbQuery.getInlineMessageId();
-            User user = cbQuery.getFrom(); // TODO if sender != user alert error
-
-            Remittance remittance = botService.updateRemittance( data, inlineMessageId );
-            responseHandler.handleUpdateRemittanceMsg( remittance );
-        };
-        return Reply.of( action, Predicates.isRemittanceSetRecipientCallback() );
-    }
-
-    public Reply handleEditRemittance() {
-        Consumer<Update> action = upd -> {
-            String query = upd.getCallbackQuery().getData();
-            //Remittance remittance = botService.getRemittance( query );
-            //responseHandler.handleEditRemittanceBtt( remittance );
-        };
-        return Reply.of( action, Predicates.isEditRemittanceCallback() );
-    }
-
-    public Reply handleDeleteRemittance() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String query = callbackQuery.getData();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Remittance deactiveRemittance = botService.deactiveRemittance( query );
-            responseHandler.handleRemoveRemittance(inlineMsgId, deactiveRemittance);
-        };
-        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
-    }
-
-    public Reply handleRestoreRemittance() {
-        Consumer<Update> action = upd -> {
-            CallbackQuery callbackQuery = upd.getCallbackQuery();
-            String query = callbackQuery.getData();
-            String inlineMsgId = callbackQuery.getInlineMessageId();
-
-            Remittance restoredRemittance = botService.restoreRemittance( query );
-            responseHandler.handleRestoreRemittance(inlineMsgId, restoredRemittance);
-        };
-        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
-    }
+//    public Reply handleRemittanceInlineAnswerMsg() {
+//        Consumer<Update> action = upd -> {
+//            long chatId = getChatId( upd );
+//            Message replies = upd.getMessage();
+//            boolean isNamedRemittance = Predicates.isNamedRemittanceMsg( replies.getText() );
+//            Remittance remittance = botService.addRemittance( chatId, replies, isNamedRemittance );
+//            List<Member> members = botService.getMembers( chatId );
+//            responseHandler.handleAddRemittanceMsg( replies, remittance, members );
+//        };
+//        return Reply.of( action, Predicates.isInlineRemittanceAnswer() );
+//    }
+//
+//    public Reply handleRemittanceSetRecipient() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery cbQuery = upd.getCallbackQuery();
+//            String data = cbQuery.getData();
+//            String inlineMessageId = cbQuery.getInlineMessageId();
+//            User user = cbQuery.getFrom(); // TODO if sender != user alert error
+//
+//            Remittance remittance = botService.updateRemittance( data, inlineMessageId );
+//            responseHandler.handleUpdateRemittanceMsg( remittance );
+//        };
+//        return Reply.of( action, Predicates.isRemittanceSetRecipientCallback() );
+//    }
+//
+//    public Reply handleEditRemittance() {
+//        Consumer<Update> action = upd -> {
+//            String query = upd.getCallbackQuery().getData();
+//            //Remittance remittance = botService.getRemittance( query );
+//            //responseHandler.handleEditRemittanceBtt( remittance );
+//        };
+//        return Reply.of( action, Predicates.isEditRemittanceCallback() );
+//    }
+//
+//    public Reply handleDeleteRemittance() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String query = callbackQuery.getData();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Remittance deactiveRemittance = botService.deactiveRemittance( query );
+//            responseHandler.handleRemoveRemittance(inlineMsgId, deactiveRemittance);
+//        };
+//        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
+//    }
+//
+//    public Reply handleRestoreRemittance() {
+//        Consumer<Update> action = upd -> {
+//            CallbackQuery callbackQuery = upd.getCallbackQuery();
+//            String query = callbackQuery.getData();
+//            String inlineMsgId = callbackQuery.getInlineMessageId();
+//
+//            Remittance restoredRemittance = botService.restoreRemittance( query );
+//            responseHandler.handleRestoreRemittance(inlineMsgId, restoredRemittance);
+//        };
+//        return Reply.of( action, Predicates.isDeleteRemittanceCallback() );
+//    }
 
 
 //    public Reply handleInlineAnswerPurchaseMsg() {
 //        Consumer<Update> action = upd -> {
 //            long chatId = getChatId( upd );
-//            Message msg = upd.getMessage();
-//            String text = msg.getText();
-//            User from = msg.getFrom();
+//            Message replies = upd.getMessage();
+//            String text = replies.getText();
+//            User from = replies.getFrom();
 //            botService.handleInlineAnswerPurchaseMsg( chatId, text, from );
 //        };
 //        return Reply.of(action, Predicates.isInlinePutchaseAnswer());

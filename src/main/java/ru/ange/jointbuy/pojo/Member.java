@@ -90,7 +90,7 @@ public class Member {
     }
 
 
-    public boolean equals(Object o){
+    public boolean equals(Object o) {
         if(o instanceof Member){
             Member tc = (Member) o;
             return this.telegramUserId == tc.getTelegramUserId() && this.telegramChatId == tc.getTelegramChatId();

@@ -52,9 +52,9 @@ public abstract  class TelegramLongPollingHandlerBot extends TelegramLongPolling
 
 //    @Override
 //    public void processNonCommandUpdate(Update update) {
-//        for (Handler handler : this.handlers) {
-//            if (handler.supports( update )) {
-//                handler.execute( update );
+//        for (Handler handlers : this.handlers) {
+//            if (handlers.supports( update )) {
+//                handlers.execute( update );
 //            }
 //        }
 //    }

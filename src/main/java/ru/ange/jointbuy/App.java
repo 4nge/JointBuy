@@ -1,19 +1,12 @@
 package ru.ange.jointbuy;
 
 
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.telegrambots.ApiContextInitializer;
 
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.meta.ApiContext;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
-import ru.ange.jointbuy.bot.JointBuyAbilityBot;
-import ru.ange.jointbuy.services.BotService;
-import ru.ange.jointbuy.test.ChannelHandlers;
+import ru.ange.jointbuy.bot.JointBuyBot;
 
 
 import java.net.Authenticator;
@@ -22,17 +15,20 @@ import java.net.PasswordAuthentication;
 
 public class App {
 
+    // TODO вынести в конфиг
     private static String PROXY_HOST = "81.2.248.110";
     private static Integer PROXY_PORT = 11080;
     private static String PROXY_USER = "soksuser";
     private static String PROXY_PASSWORD = "FV1Pg1q-N_Ev";
 
+    public static final String TOKEN = "795411227:AAEM4KjNFi9AayQzPr4eTAAQ3VcQA9QRpjw";
+    public static final String NAME = "JointBuyBot";
+
     public static void main( String[] args ) {
 
         try {
-
-            ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("context.xml" );
-            BotService botService = ctx.getBean("botService", BotService.class );
+//            ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext("context.xml" );
+//            JointBuyBotService botService = ctx.getBean("botService", JointBuyBotService.class );
 
             // Create the Authenticator that will return auth's parameters for proxy authentication
             Authenticator.setDefault(new Authenticator() {
@@ -51,7 +47,7 @@ public class App {
             botOptions.setProxyPort( PROXY_PORT );
 
             // Create bot instance
-            JointBuyAbilityBot jointBuyBot = new JointBuyAbilityBot( botOptions, botService );
+            JointBuyBot jointBuyBot = new JointBuyBot( TOKEN, NAME, botOptions );
 
             // Create the TelegramBotsApi object to register bot
             TelegramBotsApi botsApi = new TelegramBotsApi();

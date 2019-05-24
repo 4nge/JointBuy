@@ -60,7 +60,7 @@
         <property name="remittanceDAO"  ref="remittanceDAO" />
     </bean>
 
-    <bean id="botService" class="ru.ange.jointbuy.services.BotService">
+    <bean id="botService" class="ru.ange.jointbuy.bot.JointBuyBotService">
         <property name="dbService" ref="dbService" />
     </bean>
 

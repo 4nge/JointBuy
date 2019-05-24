@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StringFormater {
+public class StringUtil {
 
     public static String getRegexFromFormatString(String format) {
         String toReturn = format.replaceAll("\\.", "\\\\.")
@@ -52,6 +52,10 @@ public class StringFormater {
                .replace( "_", "" );
     }
 
+    public static boolean isMatches(String text, String ptt) {
+        String format = EmojiParser.parseToUnicode( ptt );
+        return StringUtil.matchesFormatString( text, StringUtil.removeMarkdownSyntax( format ) );
+    }
 
     public static void main(String[] args) {
 

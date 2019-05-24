@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+
+//TODO remove!
 public class ResponseHandler {
 
     private static final SimpleDateFormat DF = new SimpleDateFormat( "yyyy_MM_dd_mm_HH_ss" );
@@ -37,30 +39,30 @@ public class ResponseHandler {
     }
 
 
-    public void sendHelloMsg(long chatId, List<Member> members) {
-
-        String usersText = new String();
-        for (int i = 0; i < members.size(); i++) {
-            Member user = members.get( i );
-            String fn = user.getFirstName() != null ? user.getFirstName() : "";
-            String ln = user.getFirstName() != null ? user.getLastName() : "";
-            usersText += String.format( Constants.START_CHAT_MSG_USER_PTT, fn, ln );
-        }
-
-        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
-                createInlineKeyboardBtt( Constants.JOIN_USER_BTT_TEXT, Constants.JOIN_USER_BTT_CALLBACK )
-        );
-
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
-                .setKeyboard( keyboard );
-
-        SendMessage msg = new SendMessage()
-                .setText( EmojiParser.parseToUnicode(String.format( Constants.START_CHAT_MSG_TEXT, usersText )) )
-                .setReplyMarkup( markupInline )
-                .setChatId( chatId );
-
-        this.send(msg);
-    }
+//    public void sendHelloMsg(long chatId, List<Member> members) {
+//
+//        String usersText = new String();
+//        for (int i = 0; i < members.size(); i++) {
+//            Member user = members.get( i );
+//            String fn = user.getFirstName() != null ? user.getFirstName() : "";
+//            String ln = user.getFirstName() != null ? user.getLastName() : "";
+//            usersText += String.format( Constants.START_CHAT_MSG_USER_PTT, fn, ln );
+//        }
+//
+//        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard(
+//                createInlineKeyboardBtt( Constants.JOIN_USER_BTT_TEXT, Constants.JOIN_USER_BTT_CALLBACK )
+//        );
+//
+//        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
+//                .setKeyboard( keyboard );
+//
+//        SendMessage replies = new SendMessage()
+//                .setText( EmojiParser.parseToUnicode(String.format( Constants.START_CHAT_MSG_TEXT, usersText )) )
+//                .setReplyMarkup( markupInline )
+//                .setChatId( chatId );getRemittanceMsgData
+//
+//        this.send(replies);
+//    }
 
     public void alertUserAdded(String callId) {
         alert(callId, Constants.JOIN_USER_BTT_ANSWER_SUCCESS);
@@ -212,55 +214,55 @@ public class ResponseHandler {
     }
 
 
-    public void handleAddRemittanceMsg(Message msg, Remittance rem, List<Member> members) {
-        members.remove( rem.getSender() );
-        List<InlineKeyboardButton> btts = new ArrayList<InlineKeyboardButton>();
-
-        for (Member member : members) {
-            int remID = rem.getID();
-            int memID = member.getId();
-            String memName = member.getFullName();
-            String bttText = String.format( Constants.REMITTANCE_RECIPIENT_BTT_PTT, memName );
-            String bttCallback = String.format( Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK, remID, memID );
-            btts.add( createInlineKeyboardBtt( bttText, bttCallback ) );
-        }
-
-        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard( btts );
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
-                .setKeyboard( keyboard );
-
-        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
-                rem.getDate() );
-        String remMsgText = members.size() > 0 ?
-                remMsgTextData + Constants.REMITTANCE_MSG_CHOOSE_MEMBERS_LINE :
-                remMsgTextData + Constants.REMITTANCE_MSG_NOT_MEMBERS_LINE;
-
-        EditMessageText emt = new EditMessageText()
-                .setChatId( rem.getTelegramChatId() )
-                .setMessageId( msg.getMessageId() )
-                //.enableMarkdown( true )
-                .setText( EmojiParser.parseToUnicode( remMsgText ) )
-                .setReplyMarkup( markupInline );
-
-        this.send( emt );
-    }
-
-    public void handleUpdateRemittanceMsg(Remittance rem) {
-
-        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
-                rem.getDate() );
-        String remMsgPtt = remMsgTextData + Constants.REMITTANCE_MSG_RECIP_LINE;
-        String remMsgText = String.format( remMsgPtt, rem.getRecipient().getFullName() );
-
-        EditMessageText emt = new EditMessageText()
-                .setInlineMessageId( rem.getTelInlineMsgID() )
-                //.enableMarkdown( true )
-                .setReplyMarkup( getRemittanceKeyboardMarkup( rem ) )
-                .setText( EmojiParser.parseToUnicode( remMsgText ) );
-
-        this.send( emt );
-    }
-
+//    public void handleAddRemittanceMsg(Message replies, Remittance rem, List<Member> members) {
+//        members.remove( rem.getSender() );
+//        List<InlineKeyboardButton> btts = new ArrayList<InlineKeyboardButton>();
+//
+//        for (Member member : members) {
+//            int remID = rem.getID();
+//            int memID = member.getId();
+//            String memName = member.getFullName();
+//            String bttText = String.format( Constants.REMITTANCE_RECIPIENT_BTT_PTT, memName );
+//            String bttCallback = String.format( Constants.REMITTANCE_RECIPIENT_BTT_CALLBACK, remID, memID );
+//            btts.add( createInlineKeyboardBtt( bttText, bttCallback ) );
+//        }
+//
+//        List<List<InlineKeyboardButton>> keyboard = createInlineRowsKeyboard( btts );
+//        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup()
+//                .setKeyboard( keyboard );
+//
+//        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
+//                rem.getDate() );
+//        String remMsgText = members.size() > 0 ?
+//                remMsgTextData + Constants.REMITTANCE_MSG_CHOOSE_MEMBERS_LINE :
+//                remMsgTextData + Constants.REMITTANCE_MSG_NOT_MEMBERS_LINE;
+//
+//        EditMessageText emt = new EditMessageText()
+//                .setChatId( rem.getTelegramChatId() )
+//                .setMessageId( replies.getMessageId() )
+//                //.enableMarkdown( true )
+//                .setText( EmojiParser.parseToUnicode( remMsgText ) )
+//                .setReplyMarkup( markupInline );
+//
+//        this.send( emt );
+//    }
+//
+//    public void handleUpdateRemittanceMsg(Remittance rem) {
+//
+//        String remMsgTextData = getRemittanceMsgData( rem.getAmount(), rem.getName(), rem.getSender().getFullName(),
+//                rem.getDate() );
+//        String remMsgPtt = remMsgTextData + Constants.REMITTANCE_MSG_RECIP_LINE;
+//        String remMsgText = String.format( remMsgPtt, rem.getRecipient().getFullName() );
+//
+//        EditMessageText emt = new EditMessageText()
+//                .setInlineMessageId( rem.getTelInlineMsgID() )
+//                //.enableMarkdown( true )
+//                .setReplyMarkup( getRemittanceKeyboardMarkup( rem ) )
+//                .setText( EmojiParser.parseToUnicode( remMsgText ) );
+//
+//        this.send( emt );
+//    }
+//
 
 
 
@@ -319,18 +321,18 @@ public class ResponseHandler {
 
 
     public SendMessage getAddUserMsg(long chatId) {
-        AddUserMsg msg = new AddUserMsg();
+        AddUserMsg replies = new AddUserMsg();
         SendMessage sm = new SendMessage()
-                .setText( msg.getText() )
+                .setText( replies.getText() )
                 .setChatId( chatId );
         return sm;
     }
 
-    public void sendMsg(long chatId, String msg, boolean markdown) {
+    public void sendMsg(long chatId, String replies, boolean markdown) {
         try {
             SendMessage sm = new SendMessage()
                     .enableMarkdown( markdown )
-                    .setText( msg )
+                    .setText( replies )
                     .setChatId( chatId );
             sender.execute( getAddUserMsg( chatId ) );
         } catch (TelegramApiException e) {
@@ -452,11 +454,11 @@ public class ResponseHandler {
         }
     }
 
-    public void alert(String callId, String msg) {
+    public void alert(String callId, String replies) {
         try {
             AnswerCallbackQuery acq = new AnswerCallbackQuery()
                     .setCallbackQueryId( callId )
-                    .setText( msg );
+                    .setText( replies );
 
             sender.execute(acq);
         } catch (TelegramApiException e) {
@@ -573,12 +575,12 @@ public class ResponseHandler {
                 text = String.format( Constants.LIST_PURCHASES_MSG_PTT, purchasesList, purchases.size(), total);
             }
 
-            SendMessage msg = new SendMessage()
+            SendMessage replies = new SendMessage()
                     .setText( EmojiParser.parseToUnicode(text) )
                     .enableMarkdown( true )
                     .setChatId( chatId );
 
-            sender.execute( msg );
+            sender.execute( replies );
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -622,12 +624,12 @@ public class ResponseHandler {
             }
             String res = text.isEmpty() ? Constants.SPLIT_DEBTORS_NONE : text.replaceFirst("\n", "" );
 
-            SendMessage msg = new SendMessage()
+            SendMessage replies = new SendMessage()
                     .setText( EmojiParser.parseToUnicode(res) )
                     .enableMarkdown( true )
                     .setChatId( chatId );
 
-            sender.execute( msg );
+            sender.execute( replies );
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -650,20 +652,20 @@ public class ResponseHandler {
         }
     }
 
-    private void send(BotApiMethod msg) {
-        try {
-            sender.execute( msg );
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
+//    public send(BotApiMethod replies) {
+//        try {
+//            sender.execute( replies );
+//        } catch (TelegramApiException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 
-    private List<List<InlineKeyboardButton>> createInlineRowsKeyboard(InlineKeyboardButton... buttons) {
+    public static List<List<InlineKeyboardButton>> createInlineRowsKeyboard(InlineKeyboardButton... buttons) {
         return createInlineRowsKeyboard( Arrays.asList( buttons ) );
     }
 
-    private List<List<InlineKeyboardButton>> createInlineRowsKeyboard(List<InlineKeyboardButton> buttons) {
+    public static List<List<InlineKeyboardButton>> createInlineRowsKeyboard(List<InlineKeyboardButton> buttons) {
         List<List<InlineKeyboardButton>> result = new ArrayList<>();
         for (InlineKeyboardButton btt : buttons) {
             List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -673,7 +675,7 @@ public class ResponseHandler {
         return result;
     }
 
-    private InlineKeyboardButton createInlineKeyboardBtt(String text, String callback) {
+    public static InlineKeyboardButton createInlineKeyboardBtt(String text, String callback) {
         return new InlineKeyboardButton()
                 .setText( EmojiParser.parseToUnicode( text ) )
                 .setCallbackData( callback );

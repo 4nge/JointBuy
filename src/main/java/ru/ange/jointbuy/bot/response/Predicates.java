@@ -1,14 +1,12 @@
-package ru.ange.jointbuy.bot;
+package ru.ange.jointbuy.bot.response;
 
 import com.vdurmont.emoji.EmojiParser;
 import org.telegram.abilitybots.api.objects.Flag;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import ru.ange.jointbuy.bot.msg.HelloMsg;
 import ru.ange.jointbuy.utils.Constants;
-import ru.ange.jointbuy.utils.StringFormater;
+import ru.ange.jointbuy.utils.StringUtil;
 
 import java.util.function.Predicate;
 
@@ -20,6 +18,25 @@ public class Predicates {
     public static Predicate<Update> isInlineQuery() {
         return upd -> upd.hasInlineQuery() && upd.getInlineQuery().hasQuery();
     }
+
+
+    // ------ members ------
+
+    public static Predicate<Update> isAddNewMember() {
+        return upd -> upd.hasMessage() && upd.getMessage().getNewChatMembers() != null;
+    }
+
+    public static Predicate<Update> isAddMyself(User me) {
+        return isAddNewMember().and( upd -> upd.getMessage().getNewChatMembers().contains(me));
+    }
+
+    public static Predicate<Update> isCallbackMatches(String callback) {
+        return upd -> {
+            String query = upd.getCallbackQuery().getData();
+            return query.matches(StringUtil.getRegexFromFormatString(callback));
+        };
+    }
+
 
 
     // ------ Remittance ------
@@ -73,19 +90,13 @@ public class Predicates {
     }
 
 
-    public static Predicate<Update> isHelloReply() {
-        return Flag.CALLBACK_QUERY.and( upd ->
-            isCallbackMatches( upd, HelloMsg.CALLBACK_DATA )
-        );
-    }
+//    public static Predicate<Update> isHelloReply() {
+//        return Flag.CALLBACK_QUERY.and( upd ->
+//            isCallbackMatches( upd, HelloMsg.CALLBACK_DATA )
+//        );
+//    }
 
-    public static Predicate<Update> isAddNewMember() {
-        return upd -> upd.hasMessage() && upd.getMessage().getNewChatMembers() != null;
-    }
 
-    public static Predicate<Update> isAddMyself(User me) {
-        return isAddNewMember().and( upd -> upd.getMessage().getNewChatMembers().contains(me));
-    }
 
 
 
@@ -167,12 +178,12 @@ public class Predicates {
 
     private static boolean isCallbackMatches(Update upd, String callback) {
         String query = upd.getCallbackQuery().getData();
-        return query.matches( StringFormater.getRegexFromFormatString( callback ) );
+        return query.matches( StringUtil.getRegexFromFormatString( callback ) );
     }
 
     private static boolean isMatches(String text, String ptt) {
         String format = EmojiParser.parseToUnicode( ptt );
-        return StringFormater.matchesFormatString( text, StringFormater.removeMarkdownSyntax( format ) );
+        return StringUtil.matchesFormatString( text, StringUtil.removeMarkdownSyntax( format ) );
     }
 
     private static boolean isMsgMatches(Update upd, String msg) {
